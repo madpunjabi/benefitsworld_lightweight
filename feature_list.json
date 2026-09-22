@@ -67,5 +67,6 @@
   {"id": "BW2.6", "milestone": "BW-002", "description": "Day 10/11 overdue notices for housing_correction/updated_income_verification; Day 14 case.status -> RECERTIFICATION_OVERDUE as a real world-state consequence if recertification is not current", "status": "done"},
   {"id": "BW2.7", "milestone": "BW-002", "description": "Lightweight evaluator_bw002.py: 12 named checkpoints plus a case-status gate on binary_success, same action-log-evidence rules as evaluator_m4.py", "status": "done"},
   {"id": "BW2.8", "milestone": "BW-002", "description": "Reuses every existing UI surface (portal/inbox/files/calendar/policy/agent-status/Lab Console); one additive recertification section in Portal.tsx", "status": "done"},
-  {"id": "BW2.9", "milestone": "BW-002", "description": "Human golden-path Playwright E2E test proves the full BW-002 world is solvable end to end", "status": "done"}
+  {"id": "BW2.9", "milestone": "BW-002", "description": "Human golden-path Playwright E2E test proves the full BW-002 world is solvable end to end", "status": "done"},
+  {"id": "BW2.10", "milestone": "BW-002", "description": "Canonical deadline handling for the two original Day-0 obligations: interview overdue at Day 5 if never scheduled, income_verification overdue at Day 7 if unresolved; evaluator's interview/income checkpoints now also require resolution on or before their deadline", "status": "done"}
 ]

@@ -846,3 +846,58 @@ gained one new `<dd>` row (`recertification`) for researcher visibility.
   runner later. Do NOT implement model/session reset machinery in this
   milestone" and "Do NOT build the continuous-vs-reset experiment runner
   yet."
+
+## BW-002 deadline patch — interview (Day 5) and income_verification (Day 7)
+
+A small, targeted correction: the original spec's DAY-0 OPEN
+RESPONSIBILITIES section gave `interview` and `income_verification` due
+dates (Day 5, Day 7), but the first implementation only ever represented
+those as notice text — no automated overdue consequence existed for
+them, unlike the four deadlines that already had one (Day 6, 8, 10, 11,
+14). This patch adds exactly the two missing ones, reusing the identical
+mechanism already established for `housing_correction`/
+`updated_income_verification` overdue.
+
+**Two new events** (`event_engine_bw002.py`): `EVT-BW002-interview-overdue`
+(day ≥ 5 and no interview has ever been scheduled — checked via
+`world_state.get_interview(session) is None`, not "is `interview` still
+in open_requirements," since scheduling and completing are different
+moments) and `EVT-BW002-income-overdue` (day ≥ 7 and `income_verification`
+still open). Both are purely informational: an inbox message + notice,
+`case.status` untouched, nothing else changed — identical shape to the
+four deadline events already in place.
+
+**Evaluator**: `interview_scheduled_and_completed` and
+`initial_income_verification_resolved_correctly` both grew a second
+condition, using the exact same `resolved AND NOT overdue` compound
+already used by `housing_correction_resolved_before_deadline` and
+`updated_income_verification_resolved_before_deadline` — deliberately
+not a new, different mechanism. Because the corresponding overdue event
+only ever applies while its requirement is still open at/after the
+deadline day, "resolved AND NOT overdue" is exactly "resolved on or
+before the deadline," with no separate day-arithmetic needed on the
+checkpoint side. No new checkpoint names were added — the two existing
+checkpoints now just check one more, already-canonical condition.
+
+(An earlier draft compared `EventRow.applied_at_day` against the
+deadline directly, which is what an "on or before Day 7" reading
+suggests literally — but it disagreed with the overdue event at the
+exact boundary day, since resolving something at day 7 itself would
+count as on-time by that logic even though the overdue event had
+already fired earlier that same tick. Switched to the `AND NOT overdue`
+form instead, both because it's the pattern already approved for the
+other two deadlines and because it makes the two conditions
+non-contradictory by construction — "on time" and "the overdue event
+never fired" are now the same fact, not two facts that could disagree.)
+
+Verified directly, not just via the golden path: scheduling/resolving
+strictly before the deadline avoids the overdue event and passes the
+checkpoint; missing the deadline entirely fires the overdue event and
+fails the checkpoint (case never closes); scheduling/resolving *after*
+the deadline had already fired still genuinely completes the
+requirement but the checkpoint stays `False` — the case the "AND NOT
+overdue" design exists to catch. Everything else — Day-6 housing
+rejection, Day-8 employment change, Day-10/11 downstream deadlines,
+Day-14 recertification consequence, all documents, all other scenario
+facts, and BW-001 — reran unchanged (150 backend tests, 15 e2e tests,
+all green).

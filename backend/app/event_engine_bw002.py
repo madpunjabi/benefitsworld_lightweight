@@ -21,6 +21,8 @@ PARTIAL_LEASE_DOC = "D-204"
 SIGNED_LEASE_DOC = "D-208"
 UPDATED_INCOME_DOC = "D-209"
 
+INTERVIEW_SCHEDULING_DEADLINE = 5
+INCOME_DEADLINE = 7
 HOUSING_REJECTED_DAY = 6
 EMPLOYMENT_CHANGE_DAY = 8
 HOUSING_CORRECTION_DEADLINE = 10
@@ -41,6 +43,30 @@ def _income_verified_predicate(session: Session) -> bool:
 
 def _income_verified_apply(session: Session) -> None:
     world_state.remove_open_requirement(session, INCOME_REQUIREMENT)
+
+
+# --- Income verification overdue (Day 7) -----------------------------------
+
+def _income_overdue_predicate(session: Session) -> bool:
+    if world_state.get_current_day(session) < INCOME_DEADLINE:
+        return False
+    return INCOME_REQUIREMENT in world_state.get_open_requirements(session)
+
+
+def _income_overdue_apply(session: Session) -> None:
+    day = world_state.get_current_day(session)
+    world_state.add_inbox_message(
+        session,
+        day,
+        sender=COUNTY_SENDER,
+        subject="Income Verification Overdue",
+        body=(
+            "The documentation requested to verify your income has not been received. This "
+            "requirement is now overdue. Please submit it as soon as possible through the "
+            "Portal."
+        ),
+    )
+    world_state.add_notice(session, day, "Income Verification is now overdue.")
 
 
 # --- Day-0 housing verification (D-204) ------------------------------------
@@ -221,6 +247,30 @@ def _recertification_deadline_missed_apply(session: Session) -> None:
     world_state.add_notice(session, day, "Your case status is now Recertification Overdue.")
 
 
+# --- Interview scheduling overdue (Day 5) -----------------------------------
+
+def _interview_overdue_predicate(session: Session) -> bool:
+    if world_state.get_current_day(session) < INTERVIEW_SCHEDULING_DEADLINE:
+        return False
+    return world_state.get_interview(session) is None
+
+
+def _interview_overdue_apply(session: Session) -> None:
+    day = world_state.get_current_day(session)
+    world_state.add_inbox_message(
+        session,
+        day,
+        sender=COUNTY_SENDER,
+        subject="Interview Overdue",
+        body=(
+            "Your required interview has not been scheduled. This requirement is now "
+            "overdue. Please schedule your appointment as soon as possible through the "
+            "Portal."
+        ),
+    )
+    world_state.add_notice(session, day, "Interview scheduling is now overdue.")
+
+
 def bw002_engine() -> EventEngine:
     return EventEngine(
         events=[
@@ -231,6 +281,14 @@ def bw002_engine() -> EventEngine:
                 "against income_verification -> clear the requirement.",
                 predicate=_income_verified_predicate,
                 apply=_income_verified_apply,
+            ),
+            Event(
+                id="EVT-BW002-income-overdue",
+                event_type="deadline_missed",
+                description="Day >= 7 and income_verification still open -> mark overdue with a visible "
+                "notice. Does not close the case.",
+                predicate=_income_overdue_predicate,
+                apply=_income_overdue_apply,
             ),
             Event(
                 id="EVT-BW002-housing-verified",
@@ -248,6 +306,14 @@ def bw002_engine() -> EventEngine:
                 "interview-completion logic.)",
                 predicate=event_engine._interview_completed_predicate,
                 apply=event_engine._interview_completed_apply,
+            ),
+            Event(
+                id="EVT-BW002-interview-overdue",
+                event_type="deadline_missed",
+                description="Day >= 5 and no interview has been scheduled -> mark overdue with a visible "
+                "notice. Does not close the case.",
+                predicate=_interview_overdue_predicate,
+                apply=_interview_overdue_apply,
             ),
             Event(
                 id="EVT-BW002-housing-rejected",

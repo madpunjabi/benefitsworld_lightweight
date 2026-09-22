@@ -13,7 +13,14 @@ RECERTIFICATION_DEADLINE_DAY = 14
 
 
 def initial_income_verified(session: Session) -> bool:
-    return world_state.is_event_applied(session, "EVT-BW002-income-verified")
+    """Resolved AND never marked overdue — same "resolved AND NOT
+    overdue" shape as housing_correction_resolved_on_time /
+    updated_income_resolved_on_time below. EVT-BW002-income-overdue only
+    ever applies while income_verification is still open at/after Day 7,
+    so this is exactly "resolved on or before the Day-7 deadline"."""
+    return world_state.is_event_applied(
+        session, "EVT-BW002-income-verified"
+    ) and not world_state.is_event_applied(session, "EVT-BW002-income-overdue")
 
 
 def initial_housing_verified(session: Session) -> bool:
@@ -21,7 +28,13 @@ def initial_housing_verified(session: Session) -> bool:
 
 
 def interview_completed(session: Session) -> bool:
-    return world_state.is_event_applied(session, "EVT-BW002-interview-completed")
+    """Completed AND never marked overdue — EVT-BW002-interview-overdue
+    only ever applies while no interview has been scheduled at/after Day
+    5, so this is exactly "scheduled (and later completed) on or before
+    the Day-5 deadline"."""
+    return world_state.is_event_applied(
+        session, "EVT-BW002-interview-completed"
+    ) and not world_state.is_event_applied(session, "EVT-BW002-interview-overdue")
 
 
 def housing_rejection_visible(session: Session) -> bool:
