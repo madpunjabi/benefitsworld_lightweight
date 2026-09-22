@@ -169,15 +169,19 @@ Python dependencies remain pinned in `backend/requirements.txt`.
   persist, but requirement-clearing is explicitly Milestone 3's job.
 - Real web fetches to the DATA_POLICY.md-listed CDSS/USDA URLs were
   attempted before writing the policy library; USDA blocked the fetch
-  (403) and CDSS returned only a document index, so all three policy items
-  are `benchmark_synthetic_instruction` rather than verbatim-sourced text
-  — matching the "if a synthetic benchmark instruction is needed, label it"
-  fallback in `DATA_POLICY.md`.
+  (403) and the CDSS eligibility-standards URL returned only a document
+  index, so the original Milestone-2 corpus used `benchmark_synthetic_instruction`
+  text attributed to a fabricated "Alameda County Human Services Agency"
+  source. **Superseded by Milestone 2.1 below** — real, verbatim-sourced
+  CDSS text was found via a different, correct CDSS document (SAR 7A) and
+  the fabricated attribution was removed.
 - `authority_level` is withheld from the public `/policy` schema (not
   explicitly listed among the forbidden simulator fields in the milestone
-  spec, but the same isolation principle applies: the literal string
-  "benchmark_synthetic_instruction" would itself leak the fact that the
-  agent is inside a benchmark).
+  spec, but the same isolation principle applies: exposing an internal
+  provenance label to the benchmark agent is its own kind of leak). This
+  decision is unchanged by Milestone 2.1 — only the label's *value*
+  changed, from `benchmark_synthetic_instruction` to
+  `state_agency_official_instructions`.
 - The portal's "upload" workflow is "select an existing household document
   and attach it to a requirement" rather than a raw file-bytes upload
   widget, since there are no real binary files in this synthetic
@@ -187,3 +191,72 @@ Python dependencies remain pinned in `backend/requirements.txt`.
 - Files UI adds a derived `type` field (uppercased filename extension) not
   present in the original Milestone-1 `DocumentOut` schema, to satisfy
   "filename / document date / type / preview" from the Milestone-2 spec.
+
+## Milestone 2.1 — ground policy corpus in CDSS source (DONE)
+
+Reviewed correction: the Day-0 policy corpus was attributing synthetic
+text to a fabricated real-sounding agency name ("Alameda County Human
+Services Agency"). Replaced it entirely with a corpus grounded in the
+actual CDSS SAR 7A (12/23), "SAR 7 Eligibility Status Report Instructions."
+
+- Found the real document by following the live CDSS site:
+  `cdss.ca.gov/inforesources/forms-brochures` → "Forms - Alphabetic List"
+  → Q-T index (`.../forms-alphabetic-list/q-t`) → SAR 7A (12/23) PDF at
+  `https://www.cdss.ca.gov/Portals/9/Additional-Resources/Forms-and-Brochures/2020/Q-T/SAR7A.pdf?ver=2024-02-02-110154-403`.
+- Downloaded the PDF and extracted its text with `pypdf` (WebFetch's HTML
+  converter couldn't parse the binary PDF; `pdftoppm`/poppler wasn't
+  available locally, so text extraction was done directly in Python).
+- Froze a local copy for reproducibility: `data/policy_sources/SAR7A_12-23.pdf`
+  (the actual downloaded file) and `data/policy_sources/SAR7A_12-23_excerpts.txt`
+  (every verbatim passage used, with page numbers, plus a note of what
+  was deliberately left out — unearned income, resources, expenses,
+  fraud penalties — as out of scope for BW-001 Day 0).
+- Rewrote `data/policy_library.json` (bumped to version `0.2`) with 3
+  items, each `source: "California Department of Social Services"`,
+  `source_url` pointing at the real PDF above, `jurisdiction: "California"`,
+  `effective_date: "2023-12"` (the form's own "(12/23)" revision, not an
+  invented day-of-month), and `authority_level: "state_agency_official_instructions"`
+  (internal only — still withheld from the public `/policy` schema, same
+  as before). Item text is verbatim or near-verbatim quotation from the
+  source with inline page citations, e.g. "(SAR 7A (12/23), p. 7.)":
+  - **POL-001** — reviewing/updating pre-populated "Here is what we know"
+    information (source pp. 2, 6).
+  - **POL-002** — reporting a change in earned income on the SAR 7
+    (source pp. 6-7).
+  - **POL-003** — acceptable proof of earned income and of a change in
+    earned income (source p. 7).
+- Updated `backend/tests/test_routes_policy.py` to assert the new
+  title/source/source_url/jurisdiction/effective_date and to check the
+  proof item's text against the verbatim source phrases ("check stubs",
+  "letter from the employer or a signed written statement"). One search
+  query changed ("income verification" → "change in earned income") since
+  the real source text doesn't use the word "verification" and inserting
+  it would have been exactly the kind of generalization-beyond-source this
+  correction exists to prevent.
+- Updated `e2e/tests/day0_income_golden_path.spec.ts`'s policy-consultation
+  step to search "earned income" and check POL-003's real source citation
+  and verbatim "check stubs" text, replacing the old fabricated-content
+  assertion.
+- Did not touch: Day-0 workflow, upload behavior, `evaluator_day0.py`
+  predicates, frontend architecture, scenario facts (household/case/
+  documents), or dynamic-event behavior (there still isn't any — that's
+  Milestone 3).
+- Incidentally found and fixed a pre-existing e2e test-infrastructure race
+  while re-running the full suite: Playwright's default multi-worker mode
+  let `day0_income_golden_path.spec.ts`'s two tests run concurrently
+  against the one shared live backend, so one test's `/lab/reset` (in the
+  other's `beforeEach`) could wipe an in-progress upload mid-test — a
+  flake, not a policy-corpus regression. Set `workers: 1` in
+  `e2e/playwright.config.ts` (every spec shares one backend/DB, so no two
+  can safely run at once) and confirmed 7/7 passing across 3 consecutive
+  full runs.
+
+### Tests — all passing
+
+Backend: 52/52 (up from 51 — one test split into two: the old single
+"income verification" search assertion became a corrected search-term
+test plus a new verbatim-text/citation test). E2E: 7/7 unchanged in
+count, updated assertions in the policy step.
+
+`git diff --stat 7095d33 HEAD` and the full test run are in the
+Milestone-2.1 handoff message.

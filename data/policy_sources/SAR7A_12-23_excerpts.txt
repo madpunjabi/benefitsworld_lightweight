@@ -1,0 +1,67 @@
+Source: California Department of Social Services
+Document: "SAR 7 Eligibility Status Report Instructions (SAR 7A)"
+Form/revision: SAR 7A (12/23)
+Retrieved from: https://www.cdss.ca.gov/Portals/9/Additional-Resources/Forms-and-Brochures/2020/Q-T/SAR7A.pdf?ver=2024-02-02-110154-403
+Found via: https://www.cdss.ca.gov/inforesources/forms-brochures/forms-alphabetic-list/q-t
+Frozen local copy: data/policy_sources/SAR7A_12-23.pdf
+Extraction method: pypdf 6.19.0 text extraction, page-by-page, 2026-09-21.
+
+This file records the exact source passages backing each Day-0 policy
+item in data/policy_library.json (POL-001..POL-003), so the corpus can be
+audited against the source without re-fetching it. Text below is quoted
+verbatim from the extracted PDF text layer; only obvious PDF-extraction
+line breaks are normalized.
+
+=== Page 2 — backs POL-001 ===
+"How do I fill out my SAR 7? To fill out your SAR 7 you need to make sure
+to: Review pre-printed information. Answer all the required questions.
+Fill in all the information for any changes you report. Attach all proof
+when the form asks for it (ask the county if you need help getting
+proof). Sign and date the form.
+
+Pre-printed information: Some sections on the SAR 7 will already have
+information you reported in the past under "Here is what we know."
+You will need to review the information we have about you and every
+member of your household and then answer the question(s) asked under
+the "Update or add new" sub-sections. If you check "Yes, fill in below"
+you will need to write in the updated or new information. If you check
+"No" then go to the next question or section."
+
+=== Page 6 — backs POL-001 and POL-002 ===
+"Income
+Here is what we know: This section shows what we have about you and
+every member of your household. You need to review this.
+
+Update or add new income: If there has been a change since you last
+reported or there will be a change within the next 6 months to your
+earned or unearned income, check "Yes, fill in below" and tell us the
+change(s). If you check "No", move on to the next question.
+
+List all earned and unearned income you got in the report month. Write
+(1) the name of who got the income, (2) what the change is and the date
+of the change, (3) where they got the income from (4) how often paid,
+(5) the total gross amount they got and date(s) got it, (6) the number
+of hours worked in the month if employed, (7) attach proof..."
+
+=== Page 7 — backs POL-002 and POL-003 ===
+"Attach proof. Check "I have attached proof" at the bottom of the
+section if you are giving us proof of your income with your SAR 7.
+Check "I do not have proof/I need help getting proof" if you need help
+getting proof. The county may be able to help you get proof.
+
+Earned income is money from a job and includes a paycheck, wages, cash,
+strike benefits, vacation pay, tips, training allowances, benefits,
+bonuses, money from self-employment, temporary job or training income,
+rental income, IHSS income, etc.
+
+Proof of earned income includes but is not limited to check stubs,
+copies of checks or statements from the employer, or receipts or proof
+of earnings if self-employed.
+
+Proof of the change can be a letter from the employer or a signed
+written statement from you."
+
+Not used / out of scope for BW-001 Day 0: unearned income, resources,
+expenses, disability, life events, fraud-penalty sections (pages 3-5,
+8-14). Nothing from those sections is represented in the Day-0 policy
+corpus.

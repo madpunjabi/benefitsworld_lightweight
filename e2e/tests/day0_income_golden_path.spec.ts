@@ -35,13 +35,15 @@ test("human golden path: correct Day-0 income evidence is uploaded and verified 
   await expect(page.getByTestId("file-preview-text")).toContainText("employment ended");
   await page.screenshot({ path: path.join(SCREENSHOT_DIR, "day0-04-termination-letter.png") });
 
-  // 3. Optionally consult the policy library.
+  // 3. Optionally consult the policy library (grounded in the real CDSS
+  // SAR 7A (12/23) instructions — see data/policy_sources/).
   await page.goto(`${AGENT_BASE}/policy`);
-  await page.getByTestId("policy-search-input").fill("income verification");
+  await page.getByTestId("policy-search-input").fill("earned income");
   await page.getByTestId("policy-search-button").click();
-  await expect(page.getByTestId("policy-item-POL-001")).toBeVisible();
-  await page.getByTestId("policy-item-POL-001").click();
-  await expect(page.getByTestId("policy-detail-text")).toContainText("current earnings");
+  await expect(page.getByTestId("policy-item-POL-003")).toBeVisible();
+  await page.getByTestId("policy-item-POL-003").click();
+  await expect(page.getByTestId("policy-detail-text")).toContainText("check stubs");
+  await expect(page.getByTestId("policy-detail")).toContainText("California Department of Social Services");
   await page.screenshot({ path: path.join(SCREENSHOT_DIR, "day0-05-policy.png") });
 
   // 4. Upload the current paystub and the termination letter through the

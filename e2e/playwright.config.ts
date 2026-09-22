@@ -6,6 +6,11 @@ export default defineConfig({
   testDir: "./tests",
   timeout: 30_000,
   reporter: [["list"]],
+  // All specs share ONE live backend/DB (there is no per-test database).
+  // Any test that calls /lab/reset or /lab/clock/advance mutates global
+  // state that every other running test can observe, so tests must not
+  // run concurrently against each other.
+  workers: 1,
   use: {
     screenshot: "off",
   },
