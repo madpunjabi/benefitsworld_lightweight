@@ -1,0 +1,50 @@
+[
+  {"id": "F1.1", "milestone": 1, "description": "FastAPI application shell runs via init.sh", "status": "failing"},
+  {"id": "F1.2", "milestone": 1, "description": "SQLite schema created and populated by scenario_loader", "status": "failing"},
+  {"id": "F1.3", "milestone": 1, "description": "Deterministic reset: reset() twice from same scenario yields identical world state", "status": "failing"},
+  {"id": "F1.4", "milestone": 1, "description": "Simulated clock: current_sim_day readable on public router, advanced only via lab-token-gated /lab/clock/advance", "status": "failing"},
+  {"id": "F1.5", "milestone": 1, "description": "frontend-agent shell (Portal/Inbox/Files/Calendar/Policy/AgentStatus placeholders) served on :5173", "status": "failing"},
+  {"id": "F1.6", "milestone": 1, "description": "frontend-lab shell (LabConsole placeholder showing scenario id, sim day, case status) served on :5174", "status": "failing"},
+  {"id": "F1.7", "milestone": 1, "description": "Public router routes exist and return only whitelisted fields (no simulator/evaluator fields)", "status": "failing"},
+  {"id": "F1.8", "milestone": 1, "description": "Lab router routes all require X-Lab-Token; absent/incorrect token is rejected", "status": "failing"},
+  {"id": "F1.9", "milestone": 1, "description": "frontend-agent bundle contains no reference to :5174, /lab paths, or the lab token", "status": "failing"},
+  {"id": "F1.10", "milestone": 1, "description": "Public-route errors return sanitized responses with no stack trace/ORM/internal fields", "status": "failing"},
+
+  {"id": "F2.1", "milestone": 2, "description": "BW-001 Day 0 seed loaded: Maya Torres household, PENDING case, income requirement, reported employer Bayview Market", "status": "failing"},
+  {"id": "F2.2", "milestone": 2, "description": "/portal shows open income requirement and reported employer", "status": "failing"},
+  {"id": "F2.3", "milestone": 2, "description": "/files lists paystubs, termination letter, current/expired lease, distractor without simulator_tags", "status": "failing"},
+  {"id": "F2.4", "milestone": 2, "description": "/policy search/read usable for income-verification policy", "status": "failing"},
+  {"id": "F2.5", "milestone": 2, "description": "Upload flow persists a document to uploads and clears the matching requirement when the correct evidence is received", "status": "failing"},
+  {"id": "F2.6", "milestone": 2, "description": "Human Playwright golden path (Day 0 only) passes: inspect requirement, inspect policy, choose current paystub + termination letter, reject stale paystub, upload, verify persistence", "status": "failing"},
+
+  {"id": "F3.1", "milestone": 3, "description": "Event engine core: deterministic tick() over not-yet-applied events, predicate/apply shape, applied-guard idempotency", "status": "failing"},
+  {"id": "F3.2", "milestone": 3, "description": "EVT-income-verified fires once after correct income docs persist; clears requirement, adds interview notice, unlocks slots", "status": "failing"},
+  {"id": "F3.3", "milestone": 3, "description": "EVT-interview-scheduled fires once after a valid non-conflicting slot is booked; adds housing requirement + unread inbox message", "status": "failing"},
+  {"id": "F3.4", "milestone": 3, "description": "/inbox and /calendar functional, including interview scheduling", "status": "failing"},
+  {"id": "F3.5", "milestone": 3, "description": "A conflicting interview slot cannot be used to satisfy the interview requirement", "status": "failing"},
+  {"id": "F3.6", "milestone": 3, "description": "Events replay identically after reset (exact same applied set/order)", "status": "failing"},
+
+  {"id": "F4.1", "milestone": 4, "description": "First qualifying housing-proof upload: UI reports success, uploads.actually_persisted=0 (silent failure)", "status": "failing"},
+  {"id": "F4.2", "milestone": 4, "description": "Second correct housing-proof upload attempt actually persists", "status": "failing"},
+  {"id": "F4.3", "milestone": 4, "description": "Evaluator implements all 15 MVP checkpoints from EVAL_SPEC.md", "status": "failing"},
+  {"id": "F4.4", "milestone": 4, "description": "Evaluator produces binary_success, checkpoint_score, constraint_violations, and primary_failure_category", "status": "failing"},
+  {"id": "F4.5", "milestone": 4, "description": "Evaluator and full action_log are reachable only via lab-token-gated /lab routes", "status": "failing"},
+  {"id": "F4.6", "milestone": 4, "description": "/lab (LabConsole) shows world truth vs visible-state divergence during the silent-failure window", "status": "failing"},
+
+  {"id": "F5.1", "milestone": 5, "description": "EVT-income-change fires at current_sim_day >= 18: new employer/income document available, Day-0 income evidence now stale", "status": "failing"},
+  {"id": "F5.2", "milestone": 5, "description": "EVT-recertification-notice fires at its day threshold: adds recertification requirement + due_day", "status": "failing"},
+  {"id": "F5.3", "milestone": 5, "description": "EVT-recertification-deadline-missed fires when current_sim_day > due_day and recertification incomplete: case.status transitions deterministically", "status": "failing"},
+  {"id": "F5.4", "milestone": 5, "description": "Context-reset support: external world persists across a benchmark conversational reset; persistent condition's own files persist across that reset (world reset is a separate, harness-only action)", "status": "failing"},
+  {"id": "F5.5", "milestone": 5, "description": "Stale Day-0 evidence cannot satisfy the final evaluator once newer contradictory evidence exists", "status": "failing"},
+
+  {"id": "F6.1", "milestone": 6, "description": "agent_runner.py exposes only: navigate, inspect visible page, click, type, upload visible household file, refresh, screenshot, ask household", "status": "failing"},
+  {"id": "F6.2", "milestone": 6, "description": "navigate tool rejects any target outside the frontend-agent origin; no tool exists for raw HTTP/DB/filesystem access", "status": "failing"},
+  {"id": "F6.3", "milestone": 6, "description": "Every run saves transcript.jsonl, tool_calls.jsonl, screenshots/, eval_result.json, summary.md", "status": "failing"},
+  {"id": "F6.4", "milestone": 6, "description": "Runner supports both naive and persistent configs", "status": "failing"},
+  {"id": "F6.5", "milestone": 6, "description": "Stub/test agent validates the full runner pipeline end to end before a real model run", "status": "failing"},
+
+  {"id": "F7.1", "milestone": 7, "description": "Frozen experiment config: scenario version, policy snapshot, model snapshot/settings, max steps, environment", "status": "failing"},
+  {"id": "F7.2", "milestone": 7, "description": "3 naive + 3 persistent trials run on identical scenario/settings", "status": "failing"},
+  {"id": "F7.3", "milestone": 7, "description": "comparison.md generated with binary success, checkpoint score, action count, questions, verification rate, dynamic-event capture, state drift, recovery, failure category", "status": "failing"},
+  {"id": "F7.4", "milestone": 7, "description": "Most illustrative failure trajectory preserved for review", "status": "failing"}
+]

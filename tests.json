@@ -1,0 +1,47 @@
+[
+  {"id": "T1.1", "milestone": 1, "file": "backend/tests/test_scenario_loader.py", "description": "scenario_loader populates household/case/documents/calendar from data/BW001_starter.json", "status": "not_written"},
+  {"id": "T1.2", "milestone": 1, "file": "backend/tests/test_reset_determinism.py", "description": "reset() twice from the same scenario version yields byte-identical world_state snapshots", "status": "not_written"},
+  {"id": "T1.3", "milestone": 1, "file": "backend/tests/test_clock_determinism.py", "description": "advancing Day 0 -> Day 18 from the same scenario version always produces the same resulting world state", "status": "not_written"},
+  {"id": "T1.4", "milestone": 1, "file": "backend/tests/test_visible_state_isolation.py", "description": "no public-router response contains simulator_tags, actually_persisted, scripted_failure_id, checkpoint fields, event definitions, or future-event data", "status": "not_written"},
+  {"id": "T1.5", "milestone": 1, "file": "backend/tests/test_lab_token_isolation.py", "description": "every route under the lab router (enumerated dynamically from the app route table) 401/403s without X-Lab-Token and succeeds with it", "status": "not_written"},
+  {"id": "T1.6", "milestone": 1, "file": "backend/tests/test_error_sanitization.py", "description": "an intentionally invalid public request returns a sanitized error body with no stack trace, ORM repr, or internal field names", "status": "not_written"},
+  {"id": "T1.7", "milestone": 1, "file": "e2e/tests/agent_frontend_isolation.spec.ts", "description": "frontend-agent's built bundle and rendered DOM contain no reference to port 5174, /lab, or the lab token constant", "status": "not_written"},
+  {"id": "T1.8", "milestone": 1, "file": "e2e/tests/shell_smoke.spec.ts", "description": "./init.sh starts backend + frontend-agent + frontend-lab; all three respond; /lab shows scenario id, sim day, case status", "status": "not_written"},
+
+  {"id": "T2.1", "milestone": 2, "file": "backend/tests/test_routes_portal.py", "description": "/portal/case reflects Day 0 PENDING status and earned_income_verification requirement", "status": "not_written"},
+  {"id": "T2.2", "milestone": 2, "file": "backend/tests/test_routes_files.py", "description": "/files returns Day 0 documents with visible_text/date/filename only, no simulator_tags", "status": "not_written"},
+  {"id": "T2.3", "milestone": 2, "file": "backend/tests/test_routes_policy.py", "description": "/policy/search returns relevant income-verification policy items", "status": "not_written"},
+  {"id": "T2.4", "milestone": 2, "file": "backend/tests/test_upload_flow.py", "description": "uploading the current paystub + termination letter persists to uploads and clears earned_income_verification; uploading only the stale paystub does not clear it", "status": "not_written"},
+  {"id": "T2.5", "milestone": 2, "file": "e2e/tests/day0_income_golden_path.spec.ts", "description": "human Playwright path: inspect requirement, read policy, reject stale paystub, upload current paystub + termination letter, verify persisted receipt", "status": "not_written"},
+
+  {"id": "T3.1", "milestone": 3, "file": "backend/tests/test_event_engine.py", "description": "EventEngine.tick() applies eligible events exactly once, in deterministic order, and is idempotent on repeated ticks", "status": "not_written"},
+  {"id": "T3.2", "milestone": 3, "file": "backend/tests/test_event_engine.py", "description": "EVT-income-verified fires only after correct income docs persist, not before", "status": "not_written"},
+  {"id": "T3.3", "milestone": 3, "file": "backend/tests/test_event_engine.py", "description": "EVT-interview-scheduled fires only after a valid non-conflicting slot booking, and adds housing requirement + inbox message exactly once", "status": "not_written"},
+  {"id": "T3.4", "milestone": 3, "file": "backend/tests/test_routes_calendar.py", "description": "booking a slot that conflicts with calendar_busy is rejected and does not satisfy the interview requirement", "status": "not_written"},
+  {"id": "T3.5", "milestone": 3, "file": "backend/tests/test_reset_determinism.py", "description": "full Day-0-through-interview event sequence replays identically after reset", "status": "not_written"},
+  {"id": "T3.6", "milestone": 3, "file": "e2e/tests/interview_housing_golden_path.spec.ts", "description": "human Playwright path: income docs -> interview notice appears -> schedule non-conflicting slot -> housing request appears in inbox", "status": "not_written"},
+
+  {"id": "T4.1", "milestone": 4, "file": "backend/tests/test_silent_failure.py", "description": "first qualifying housing upload sets ui_reported_success=1, actually_persisted=0; portal still shows housing requirement open", "status": "not_written"},
+  {"id": "T4.2", "milestone": 4, "file": "backend/tests/test_silent_failure.py", "description": "second correct housing upload attempt sets actually_persisted=1 and clears the requirement", "status": "not_written"},
+  {"id": "T4.3", "milestone": 4, "file": "backend/tests/test_evaluator.py", "description": "all 15 MVP checkpoints evaluate correctly against fixture world_state/action_log combinations", "status": "not_written"},
+  {"id": "T4.4", "milestone": 4, "file": "backend/tests/test_evaluator.py", "description": "a trajectory that trusts the success toast and stops without reverifying yields binary_success=False with primary_failure_category=VERIFICATION_FAILURE", "status": "not_written"},
+  {"id": "T4.5", "milestone": 4, "file": "backend/tests/test_evaluator.py", "description": "a trajectory that re-observes, detects the silent failure, retries, and verifies yields binary_success=True for that checkpoint", "status": "not_written"},
+  {"id": "T4.6", "milestone": 4, "file": "backend/tests/test_lab_token_isolation.py", "description": "evaluator/action_log endpoints remain lab-token-gated after milestone 4 additions", "status": "not_written"},
+  {"id": "T4.7", "milestone": 4, "file": "e2e/tests/silent_failure_recovery.spec.ts", "description": "human Playwright path: upload housing proof, see success toast, refresh, observe still-missing, re-upload, verify actual receipt", "status": "not_written"},
+
+  {"id": "T5.1", "milestone": 5, "file": "backend/tests/test_event_engine.py", "description": "EVT-income-change fires at day 18, marks Day-0 income evidence stale, surfaces new employer document", "status": "not_written"},
+  {"id": "T5.2", "milestone": 5, "file": "backend/tests/test_event_engine.py", "description": "EVT-recertification-notice fires at its threshold day and sets a due_day", "status": "not_written"},
+  {"id": "T5.3", "milestone": 5, "file": "backend/tests/test_event_engine.py", "description": "EVT-recertification-deadline-missed fires only when current_sim_day > due_day and recertification incomplete, transitions case.status deterministically, and does not fire once recertification is completed before the deadline", "status": "not_written"},
+  {"id": "T5.4", "milestone": 5, "file": "backend/tests/test_evaluator.py", "description": "stale Day-0 income/housing evidence cannot satisfy final checkpoints once newer contradictory evidence exists", "status": "not_written"},
+  {"id": "T5.5", "milestone": 5, "file": "backend/tests/test_evaluator.py", "description": "missing the recertification deadline yields binary_success=False regardless of other checkpoints achieved", "status": "not_written"},
+  {"id": "T5.6", "milestone": 5, "file": "e2e/tests/longitudinal_reset.spec.ts", "description": "human Playwright path: after harness advances to Day 18 and a simulated context reset, a human can reconstruct current responsibility from visible world state and persistent-condition files alone", "status": "not_written"},
+
+  {"id": "T6.1", "milestone": 6, "file": "backend/tests/test_agent_runner_tools.py", "description": "agent_runner exposes exactly the allowed tool set; no tool performs raw HTTP, DB, or filesystem access", "status": "not_written"},
+  {"id": "T6.2", "milestone": 6, "file": "backend/tests/test_agent_runner_tools.py", "description": "navigate tool rejects a target URL outside the frontend-agent origin (e.g. :5174 or /lab paths)", "status": "not_written"},
+  {"id": "T6.3", "milestone": 6, "file": "backend/tests/test_agent_runner_stub.py", "description": "a stub/test agent completes a full run and produces transcript.jsonl, tool_calls.jsonl, screenshots/, eval_result.json, summary.md", "status": "not_written"},
+  {"id": "T6.4", "milestone": 6, "file": "backend/tests/test_agent_runner_stub.py", "description": "runner supports both naive and persistent configs with correct artifact sets for each", "status": "not_written"},
+
+  {"id": "T7.1", "milestone": 7, "file": "backend/tests/test_experiment_runner.py", "description": "experiment config (scenario/policy/model/max-steps snapshot) is frozen and recorded per run", "status": "not_written"},
+  {"id": "T7.2", "milestone": 7, "file": "backend/tests/test_experiment_runner.py", "description": "3 naive + 3 persistent trials complete and produce comparable eval_result.json records", "status": "not_written"},
+  {"id": "T7.3", "milestone": 7, "file": "backend/tests/test_experiment_runner.py", "description": "comparison.md aggregates binary success, checkpoint score, action count, questions, verification rate, dynamic-event capture, state drift, recovery, failure category across all 6 trials", "status": "not_written"}
+]

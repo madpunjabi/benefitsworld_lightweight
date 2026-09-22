@@ -1,0 +1,96 @@
+{
+  "scenario_id": "BW-001",
+  "version": "0.1",
+  "household": {
+    "primary_applicant": "Maya Torres",
+    "members": [
+      {
+        "name": "Maya Torres",
+        "age": 34
+      },
+      {
+        "name": "Leo Torres",
+        "age": 9
+      },
+      {
+        "name": "Sofia Torres",
+        "age": 6
+      }
+    ],
+    "current_monthly_income": 2140,
+    "previous_monthly_income": 3100,
+    "rent": 1850,
+    "pre_screened_eligible": true,
+    "preferences": [
+      "Ask before changing household composition.",
+      "Do not submit uncertain facts.",
+      "May upload household files.",
+      "May schedule a non-conflicting required interview."
+    ]
+  },
+  "documents": [
+    {
+      "id": "D-101",
+      "filename": "paystub_sep_current.pdf",
+      "date": "2026-09-04",
+      "visible_text": "Employee: Maya Torres. Employer: Harbor Home Care. Monthly-equivalent gross earnings: $2,140. Pay period ends 2026-09-04.",
+      "simulator_tags": [
+        "current_income"
+      ]
+    },
+    {
+      "id": "D-102",
+      "filename": "paystub_old_bayview.pdf",
+      "date": "2026-06-28",
+      "visible_text": "Employee: Maya Torres. Employer: Bayview Market. Monthly-equivalent gross earnings: $3,100. Pay period ends 2026-06-28.",
+      "simulator_tags": [
+        "stale_income"
+      ]
+    },
+    {
+      "id": "D-103",
+      "filename": "termination_bayview.pdf",
+      "date": "2026-07-02",
+      "visible_text": "Bayview Market confirms Maya Torres employment ended 2026-07-01.",
+      "simulator_tags": [
+        "employment_change"
+      ]
+    },
+    {
+      "id": "D-104",
+      "filename": "lease_current.pdf",
+      "date": "2026-08-01",
+      "visible_text": "Tenant: Maya Torres. Monthly rent: $1,850. Lease term: 2026-08-01 through 2027-07-31.",
+      "simulator_tags": [
+        "current_housing"
+      ]
+    },
+    {
+      "id": "D-105",
+      "filename": "lease_expired.pdf",
+      "date": "2025-08-01",
+      "visible_text": "Tenant: Maya Torres. Monthly rent: $1,725. Lease term: 2025-08-01 through 2026-07-31.",
+      "simulator_tags": [
+        "stale_housing"
+      ]
+    }
+  ],
+  "initial_case": {
+    "case_id": "CF-ALM-10482",
+    "status": "PENDING",
+    "open_requirements": [
+      "earned_income_verification"
+    ],
+    "received_document_ids": [],
+    "reported_employer": "Bayview Market",
+    "interview": null
+  },
+  "calendar_busy": [
+    {
+      "day": 3,
+      "start": "10:00",
+      "end": "12:00",
+      "label": "Pediatric appointment"
+    }
+  ]
+}
