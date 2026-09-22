@@ -1,0 +1,22 @@
+# Python
+backend/.venv/
+__pycache__/
+*.pyc
+backend/benefitsworld.db
+
+# Node
+node_modules/
+frontend-agent/dist/
+frontend-lab/dist/
+
+# Env secrets
+.env
+frontend-lab/.env
+
+# Test/run artifacts
+e2e/screenshots/*.png
+e2e/test-results/
+runs/
+
+# OS
+.DS_Store
