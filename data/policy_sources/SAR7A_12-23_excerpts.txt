@@ -65,3 +65,24 @@ Not used / out of scope for BW-001 Day 0: unearned income, resources,
 expenses, disability, life events, fraud-penalty sections (pages 3-5,
 8-14). Nothing from those sections is represented in the Day-0 policy
 corpus.
+
+=== Milestone 3 addition ===
+
+=== Page 10 — backs POL-004 (housing costs) ===
+"Rent and Utilities: If your address has changed since you last reported,
+check "Yes". If your address has changed, you must tell us what your
+rent and utilities are. If you check "No", you can move on to the next
+section.
+
+If you choose to tell us about your expenses or have a new address that
+you must tell us, tell us about your housing costs like rent, utilities,
+mortgage, renter's or homeowner's insurance, property taxes, and
+garbage/trash collection fees. If your costs have increased because you
+moved, be sure to list the amounts."
+
+=== Milestone-2.1 metadata correction ===
+"(12/23)" on every page is the form's own revision label, not a
+regulatory effective date. As of Milestone 3, data/policy_library.json
+stores this as `source_version: "12/23"` with `effective_date: null`,
+since the document does not itself establish a separate effective date
+for its instructional text.

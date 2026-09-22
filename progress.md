@@ -260,3 +260,129 @@ count, updated assertions in the policy step.
 
 `git diff --stat 7095d33 HEAD` and the full test run are in the
 Milestone-2.1 handoff message.
+
+## Milestone 3 — deterministic dynamic events + interview + housing (DONE)
+
+Turned the static Day-0 environment into a changing case:
+`earned_income_verification` clears → an `interview` requirement opens →
+the agent schedules any slot (including a conflicting one — nothing stops
+it) → the harness advances simulated time past it → the interview
+completes → a `housing_cost_verification` requirement + inbox message
+appear → the current lease clears it.
+
+**Metadata cleanup (spec section 1):** `policy_items.effective_date` is
+now nullable; a form's own revision label (`"12/23"`, `"11/16"`) is
+stored separately as `source_version` and no longer conflated with an
+established effective date. Applied to all 5 policy items, including the
+3 approved in Milestone 2.1 — their `source`/`source_url`/`jurisdiction`/
+text are otherwise untouched.
+
+**Event engine** (`backend/app/event_engine.py`): a new `events` table
+persists applied-state per event id (survives a process restart).
+`EventEngine.tick()` runs a fixed-point loop — it rescans the event list
+until a full pass applies nothing — so a chain (income-verified today,
+interview-completed and housing-request in the same tick once time
+advances) resolves deterministically without a second manual call. Ticked
+after every state-changing action that could satisfy a predicate: upload,
+interview scheduling, and clock advance.
+
+**Four events:**
+| Event | Predicate | Effect |
+|---|---|---|
+| `EVT-income-verified` | D-101 (current paystub) and D-103 (termination letter) both persisted against `earned_income_verification`, which is still open | clears the requirement; opens `interview`; adds a portal notice; creates interview slots SLOT-1 (Day 2, 09:00-10:00), SLOT-2 (Day 3, 10:30-11:30 — overlaps the pediatric appointment), SLOT-3 (Day 3, 13:30-14:30) |
+| `EVT-interview-completed` | interview status is `scheduled` and `current_sim_day` > the scheduled day | interview status → `completed`; `interview` requirement cleared |
+| `EVT-housing-request` | interview status is `completed` and `housing_cost_verification` not already open | opens `housing_cost_verification`; adds an inbox message ("Alameda County Human Services Agency" / "Proof of Housing Costs Needed") and a portal notice |
+| `EVT-housing-verified` | D-104 (current lease) persisted against `housing_cost_verification`, which is still open | clears the requirement |
+
+D-102 (stale paystub) never satisfies `EVT-income-verified` even if
+uploaded alongside the correct docs; D-105 (expired lease) never
+satisfies `EVT-housing-verified`.
+
+**Interview scheduling is intentionally permissive**: `POST
+/portal/interview/schedule` accepts any `slot_id` with no calendar check
+— the government scheduling surface has no access to `calendar_events`.
+`GET /portal/interview/slots` returns only `id/day/start_time/end_time`,
+no conflict flag. Whether a choice conflicts is answered only by the
+backend-only `evaluator_m3.selected_interview_conflicts_with_household_calendar`.
+
+**New tables**: `events`, `interview_slots`, `notices` (Day-0's notice is
+now seeded from `data/BW001_starter.json`'s new `initial_notices`, not
+derived from `open_requirements` — same text, different mechanism, so it
+also serves the interview/housing notices), `inbox_messages`.
+
+**UI**: `/calendar` now groups real household appointments by day (no
+"conflict" label anywhere). `/inbox` is a real read/unread list with a
+detail pane and mark-as-read. `/portal` special-cases the `interview`
+requirement with a slot-picker + confirm button (every other requirement
+still uses the generic document-select-and-upload control from Milestone
+2) and shows interview day/time/status in the case summary once
+scheduled. Lab Console now also shows open requirements, interview state,
+applied/pending event IDs, and the canonical uploads table — still
+token-gated, still never linked from or reachable by the agent frontend.
+
+**Backend checkpoint helpers** (`backend/app/evaluator_m3.py`, not wired
+to any route): all 11 predicates from spec section 15 (income/interview/
+calendar/conflict/housing lifecycle).
+
+### Policy sources added
+
+- **POL-004** — "Reporting Housing Costs," reusing the already-frozen
+  SAR 7A (12/23) source (page 10, not previously excerpted — added to
+  `data/policy_sources/SAR7A_12-23_excerpts.txt`). No new fetch needed.
+- **POL-005** — "What Happens at the Interview," from CF 37 (11/16),
+  "Recertification for CalFresh Benefits," found via web search and
+  frozen at `data/policy_sources/CF37_11-16.pdf` /
+  `CF37_11-16_excerpts.txt`. **Scope note**: CF 37's interview guidance is
+  written for recertification interviews, not a SAR7-triggered mid-period
+  interview — the excerpt file says so explicitly. POL-005 is cited only
+  for what a CalFresh interview generally involves, never as the reason
+  BW-001's interview requirement appears; that trigger is a
+  benchmark-authored scenario mechanic with no real-policy citation
+  attached to it, per the instruction not to attribute synthetic
+  mechanics to CDSS.
+
+Both new items keep `authority_level: "state_agency_official_instructions"`
+(same as the three from Milestone 2.1) — real CDSS-published forms, not
+synthetic text.
+
+### Tests — all passing
+
+Backend: **77/77** (up from 52 — 25 new: `test_event_engine.py`,
+`test_interview_scheduling.py`, `test_housing_flow.py`, one new
+determinism test, one new isolation test, two new policy tests). E2E:
+**11/11** (up from 7 — new `interview_housing_golden_path.spec.ts` and
+`m3_negative_paths.spec.ts`), confirmed stable across 3 consecutive full
+runs. All Milestone 1/2/2.1 tests still pass unchanged in assertions
+(some had their expected-field-set or known-path allowlists extended to
+account for legitimately new fields/routes).
+
+Two real bugs found and fixed while re-verifying the full e2e suite (not
+just the required workers:1 setting, which M2.1 already established):
+1. The new golden path used `locator.allTextContents()`, which doesn't
+   auto-wait, to read interview-slot `<option>` text — raced the portal's
+   async fetch. Fixed by asserting on the `<select>` element itself with
+   `expect(...).toContainText(...)`, which retries.
+2. `shell_smoke.spec.ts` (Milestone 1) asserted `lab-sim-day` starts at
+   `"0"` with no reset of its own — true when it happened to run first,
+   false once later specs in the same shared-backend run advance time.
+   Added the same `beforeEach` reset used everywhere else.
+
+### Deviations from the Milestone-3 specification
+
+- None of the "do not build yet" list was touched (silent failure, Day-18
+  income change, context reset, recertification, deadline consequence,
+  persistent `case_state.json`, benchmark runner, naive/persistent
+  comparison, arbitrary Lab world editor).
+- `EVT-housing-request`'s predicate includes an explicit
+  `"housing_cost_verification" not in open_requirements` check in
+  addition to the event engine's own applied-once guard — belt-and-
+  suspenders matching the spec's literal predicate wording, though the
+  guard alone would have sufficed.
+- Interview notice/housing notice/Day-0 notice all now live in one real
+  `notices` table instead of Milestone 2's derived-from-requirements
+  approach — necessary once events needed to create notices themselves;
+  the Day-0 notice's exact text was preserved so no user-visible behavior
+  changed.
+- Two pre-existing e2e flakiness sources (see above) were fixed while
+  verifying this milestone; both are test-infrastructure issues, not
+  regressions in Milestone 3's own code.

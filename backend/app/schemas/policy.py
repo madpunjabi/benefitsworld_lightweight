@@ -7,6 +7,7 @@ class PolicyItemOut(BaseModel):
     source: str
     source_url: str | None
     jurisdiction: str
-    effective_date: str
+    effective_date: str | None
+    source_version: str | None
     topic: str
     text: str

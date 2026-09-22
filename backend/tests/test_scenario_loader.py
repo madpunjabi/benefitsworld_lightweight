@@ -18,5 +18,9 @@ def test_scenario_loader_populates_core_tables(client, session):
     assert "earned_income_verification" in json.loads(case.open_requirements_json)
     assert len(docs) == 6
     assert len(events) == 1
-    assert len(policy_items) == 3
+    assert len(policy_items) == 5
     assert world_state.get_received_document_ids(session) == []
+    assert len(world_state.get_notices(session)) == 1
+    assert world_state.get_interview_slots(session) == []
+    assert world_state.get_inbox_messages(session) == []
+    assert world_state.get_applied_event_ids(session) == []

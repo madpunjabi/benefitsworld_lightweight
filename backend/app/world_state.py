@@ -100,12 +100,127 @@ def log_action(session: Session, actor: str, sim_day: int, action_type: str, pay
     session.commit()
 
 
+# --- Requirements -----------------------------------------------------
+
+def get_open_requirements(session: Session) -> list[str]:
+    return json.loads(get_case(session).open_requirements_json)
+
+
+def add_open_requirement(session: Session, requirement: str) -> None:
+    case = get_case(session)
+    requirements = json.loads(case.open_requirements_json)
+    if requirement not in requirements:
+        requirements.append(requirement)
+        case.open_requirements_json = json.dumps(requirements)
+        session.commit()
+
+
+def remove_open_requirement(session: Session, requirement: str) -> None:
+    case = get_case(session)
+    requirements = json.loads(case.open_requirements_json)
+    if requirement in requirements:
+        requirements.remove(requirement)
+        case.open_requirements_json = json.dumps(requirements)
+        session.commit()
+
+
+# --- Interview ----------------------------------------------------------
+
+def get_interview(session: Session) -> dict | None:
+    case = get_case(session)
+    return json.loads(case.interview_json) if case.interview_json else None
+
+
+def set_interview(session: Session, data: dict | None) -> None:
+    case = get_case(session)
+    case.interview_json = json.dumps(data) if data is not None else None
+    session.commit()
+
+
+def add_interview_slots(session: Session, slots: list[dict]) -> None:
+    for slot in slots:
+        session.add(
+            models.InterviewSlot(
+                id=slot["id"], day=slot["day"], start_time=slot["start_time"], end_time=slot["end_time"]
+            )
+        )
+    session.commit()
+
+
+def get_interview_slots(session: Session) -> list[models.InterviewSlot]:
+    return session.query(models.InterviewSlot).order_by(models.InterviewSlot.id).all()
+
+
+def get_interview_slot(session: Session, slot_id: str) -> models.InterviewSlot | None:
+    return session.get(models.InterviewSlot, slot_id)
+
+
+# --- Notices --------------------------------------------------------------
+
+def add_notice(session: Session, day: int, text: str) -> None:
+    session.add(models.Notice(day=day, text=text))
+    session.commit()
+
+
+def get_notices(session: Session) -> list[models.Notice]:
+    return session.query(models.Notice).order_by(models.Notice.id).all()
+
+
+# --- Inbox ------------------------------------------------------------
+
+def add_inbox_message(session: Session, day: int, sender: str, subject: str, body: str) -> None:
+    session.add(models.InboxMessage(day=day, sender=sender, subject=subject, body=body, is_read=0))
+    session.commit()
+
+
+def get_inbox_messages(session: Session) -> list[models.InboxMessage]:
+    return session.query(models.InboxMessage).order_by(models.InboxMessage.id).all()
+
+
+def get_inbox_message(session: Session, message_id: int) -> models.InboxMessage | None:
+    return session.get(models.InboxMessage, message_id)
+
+
+def mark_inbox_message_read(session: Session, message_id: int) -> None:
+    message = get_inbox_message(session, message_id)
+    if message is not None:
+        message.is_read = 1
+        session.commit()
+
+
+# --- Events -------------------------------------------------------------
+
+def is_event_applied(session: Session, event_id: str) -> bool:
+    row = session.get(models.EventRow, event_id)
+    return row is not None and row.applied == 1
+
+
+def mark_event_applied(session: Session, event_id: str, event_type: str, description: str, day: int) -> None:
+    row = session.get(models.EventRow, event_id)
+    if row is None:
+        row = models.EventRow(
+            id=event_id, event_type=event_type, trigger_description=description, applied=1, applied_at_day=day
+        )
+        session.add(row)
+    else:
+        row.applied = 1
+        row.applied_at_day = day
+    session.commit()
+
+
+def get_applied_event_ids(session: Session) -> list[str]:
+    rows = session.query(models.EventRow).filter(models.EventRow.applied == 1).order_by(models.EventRow.id).all()
+    return [r.id for r in rows]
+
+
 def snapshot(session: Session) -> dict:
     """A deterministic, JSON-serializable view of world truth, used to
-    assert reset/clock determinism. Deliberately excludes action_log: the
-    log is a record of what happened during a run, not scenario truth, and
-    two resets are expected to produce an identical *scenario* state even
-    if a different number of harness actions preceded each reset."""
+    assert reset/clock determinism. Deliberately excludes action_log and
+    uploads: those are a record of what actions were *taken* during a run,
+    not scenario truth — running the identical sequence of actions twice
+    is expected to (and is separately verified to) produce identical
+    uploads, but the snapshot itself only needs to cover state the event
+    engine and scenario loader are responsible for keeping deterministic."""
     meta = get_meta(session)
     household = get_household(session)
     case = get_case(session)
@@ -160,13 +275,31 @@ def snapshot(session: Session) -> dict:
                 "source_url": p.source_url,
                 "jurisdiction": p.jurisdiction,
                 "effective_date": p.effective_date,
+                "source_version": p.source_version,
                 "topic": p.topic,
                 "authority_level": p.authority_level,
                 "text": p.text,
             }
             for p in get_policy_items(session)
         ],
-        # uploads deliberately excluded, for the same reason action_log is:
-        # they record what happened during a run, not scenario truth. A
-        # fresh reset always yields zero uploads regardless of prior state.
+        "notices": [{"id": n.id, "day": n.day, "text": n.text} for n in get_notices(session)],
+        "interview_slots": [
+            {"id": s.id, "day": s.day, "start_time": s.start_time, "end_time": s.end_time}
+            for s in get_interview_slots(session)
+        ],
+        "inbox_messages": [
+            {
+                "id": m.id,
+                "day": m.day,
+                "sender": m.sender,
+                "subject": m.subject,
+                "body": m.body,
+                "is_read": m.is_read,
+            }
+            for m in get_inbox_messages(session)
+        ],
+        "events_applied": {
+            r.id: r.applied_at_day
+            for r in session.query(models.EventRow).order_by(models.EventRow.id).all()
+        },
     }

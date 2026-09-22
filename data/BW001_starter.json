@@ -101,5 +101,11 @@
       "end": "12:00",
       "label": "Pediatric appointment"
     }
+  ],
+  "initial_notices": [
+    {
+      "day": 0,
+      "text": "Action required: Earned Income Verification. Please submit supporting documentation."
+    }
   ]
 }

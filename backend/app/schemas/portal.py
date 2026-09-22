@@ -13,6 +13,7 @@ class CaseOut(BaseModel):
 
 class NoticeOut(BaseModel):
     id: str
+    day: int
     text: str
 
 
@@ -25,3 +26,22 @@ class UploadOut(BaseModel):
     document_id: str
     requirement: str
     received: bool
+
+
+class InterviewSlotOut(BaseModel):
+    id: str
+    day: int
+    start_time: str
+    end_time: str
+
+
+class ScheduleInterviewIn(BaseModel):
+    slot_id: str
+
+
+class ScheduleInterviewOut(BaseModel):
+    status: str
+    slot_id: str
+    day: int
+    start_time: str
+    end_time: str

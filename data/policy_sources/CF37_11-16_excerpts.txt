@@ -1,0 +1,42 @@
+Source: California Department of Social Services
+Document: "Recertification for CalFresh Benefits" (CalFresh Program Rules)
+Form/revision: CF 37 (11/16)
+Retrieved from: https://www.cdss.ca.gov/cdssweb/entres/forms/english/cf37.pdf
+Found via: web search ("CDSS CalFresh SAR household eligibility interview
+requirement site:cdss.ca.gov"), 2026-09-22.
+Frozen local copy: data/policy_sources/CF37_11-16.pdf
+Extraction method: pypdf 6.19.0 text extraction, page-by-page, 2026-09-22.
+
+This file records the exact source passage backing POL-005 in
+data/policy_library.json, so it can be audited against the source without
+re-fetching it.
+
+Note on scope: this form's interview guidance is written for CalFresh
+*recertification* interviews (turning in a recertification application
+before the end of a certification period), not for an interview requested
+mid-SAR-period after a SAR 7 income update. BW-001's Milestone-3 scenario
+event (income re-verification triggering a new interview requirement) is
+a benchmark-authored scenario mechanic, not something this form
+establishes. POL-005 is scoped to what CF 37 actually says happens during
+a CalFresh interview generally — it is not cited as the reason an
+interview appears in BW-001's timeline.
+
+=== Page 1 — backs POL-005 ===
+"What do I do next?
+The County will send you an interview appointment letter to discuss this
+application. Most interviews are done by phone, but can also be done in
+person at the County office or other place if arranged with the County.
+If you need other arrangements because of a disability, let the County
+know. Your worker can help you complete this application during the
+interview if you did not fill out all sections or if you need to make
+changes.
+
+What happens at the recertification interview?
+During the interview, the County will go over the information on the
+application and will ask questions to recertify you for CalFresh and
+determine your benefits. To avoid a delay in recertifying, provide proof
+of any changes in circumstance at the time of the interview. Examples are
+change in income; change in people buying/eating together, change in
+housing costs, etc. Keep your interview even if you do not have the
+proof. The County may be able to help to get the proof needed to
+recertify."

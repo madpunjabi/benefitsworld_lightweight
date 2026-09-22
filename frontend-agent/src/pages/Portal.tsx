@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { getJSON, postJSON } from "../api/client";
-import type { CaseOut, DocumentOut, NoticeOut } from "../api/types";
+import type { CaseOut, DocumentOut, InterviewSlotOut, NoticeOut } from "../api/types";
 
 function readableRequirement(requirement: string): string {
   return requirement
@@ -13,7 +13,9 @@ export default function Portal() {
   const [caseData, setCaseData] = useState<CaseOut | null>(null);
   const [notices, setNotices] = useState<NoticeOut[]>([]);
   const [files, setFiles] = useState<DocumentOut[]>([]);
+  const [slots, setSlots] = useState<InterviewSlotOut[]>([]);
   const [selection, setSelection] = useState<Record<string, string>>({});
+  const [selectedSlot, setSelectedSlot] = useState<string>("");
   const [status, setStatus] = useState<string | null>(null);
 
   const refresh = useCallback(() => {
@@ -21,10 +23,12 @@ export default function Portal() {
       getJSON<CaseOut>("/portal/case"),
       getJSON<NoticeOut[]>("/portal/notices"),
       getJSON<DocumentOut[]>("/files"),
-    ]).then(([c, n, f]) => {
+      getJSON<InterviewSlotOut[]>("/portal/interview/slots"),
+    ]).then(([c, n, f, s]) => {
       setCaseData(c);
       setNotices(n);
       setFiles(f);
+      setSlots(s);
     });
   }, []);
 
@@ -55,6 +59,17 @@ export default function Portal() {
     refresh();
   };
 
+  const onScheduleInterview = async () => {
+    if (!selectedSlot) {
+      setStatus("Select an appointment before confirming.");
+      return;
+    }
+    setStatus(null);
+    await postJSON("/portal/interview/schedule", { slot_id: selectedSlot });
+    setStatus("Interview appointment confirmed.");
+    refresh();
+  };
+
   return (
     <div data-testid="page-portal">
       <h2>Case Portal</h2>
@@ -78,6 +93,16 @@ export default function Portal() {
               <th>Employer on file</th>
               <td data-testid="reported-employer">{caseData.reported_employer ?? "—"}</td>
             </tr>
+            {caseData.interview && (
+              <tr>
+                <th>Interview</th>
+                <td data-testid="interview-status">
+                  Day {caseData.interview.day}, {caseData.interview.start_time}–
+                  {caseData.interview.end_time} —{" "}
+                  <span className="status-badge">{caseData.interview.status.toUpperCase()}</span>
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </section>
@@ -95,32 +120,54 @@ export default function Portal() {
       <section data-testid="open-requirements">
         <h3>Open Requirements</h3>
         {caseData.open_requirements.length === 0 && <p className="muted">No open requirements.</p>}
-        {caseData.open_requirements.map((requirement) => (
-          <div className="card" key={requirement} data-testid={`requirement-${requirement}`}>
-            <strong>{readableRequirement(requirement)}</strong>
-            <p className="muted">
-              Submit a document from your files that supports this requirement.
-            </p>
-            <select
-              data-testid={`requirement-select-${requirement}`}
-              value={selection[requirement] ?? ""}
-              onChange={(e) => setSelection({ ...selection, [requirement]: e.target.value })}
-            >
-              <option value="">Select a document…</option>
-              {files.map((f) => (
-                <option key={f.id} value={f.id}>
-                  {f.filename} ({f.date})
-                </option>
-              ))}
-            </select>{" "}
-            <button
-              data-testid={`requirement-upload-${requirement}`}
-              onClick={() => onUpload(requirement)}
-            >
-              Upload
-            </button>
-          </div>
-        ))}
+        {caseData.open_requirements.map((requirement) =>
+          requirement === "interview" ? (
+            <div className="card" key={requirement} data-testid="requirement-interview">
+              <strong>Interview</strong>
+              <p className="muted">Choose an available appointment to schedule your interview.</p>
+              <select
+                data-testid="interview-slot-select"
+                value={selectedSlot}
+                onChange={(e) => setSelectedSlot(e.target.value)}
+              >
+                <option value="">Select an appointment…</option>
+                {slots.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    Day {s.day}, {s.start_time}–{s.end_time}
+                  </option>
+                ))}
+              </select>{" "}
+              <button data-testid="interview-confirm-button" onClick={onScheduleInterview}>
+                Confirm Appointment
+              </button>
+            </div>
+          ) : (
+            <div className="card" key={requirement} data-testid={`requirement-${requirement}`}>
+              <strong>{readableRequirement(requirement)}</strong>
+              <p className="muted">
+                Submit a document from your files that supports this requirement.
+              </p>
+              <select
+                data-testid={`requirement-select-${requirement}`}
+                value={selection[requirement] ?? ""}
+                onChange={(e) => setSelection({ ...selection, [requirement]: e.target.value })}
+              >
+                <option value="">Select a document…</option>
+                {files.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.filename} ({f.date})
+                  </option>
+                ))}
+              </select>{" "}
+              <button
+                data-testid={`requirement-upload-${requirement}`}
+                onClick={() => onUpload(requirement)}
+              >
+                Upload
+              </button>
+            </div>
+          ),
+        )}
       </section>
 
       {status && (

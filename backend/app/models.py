@@ -75,10 +75,57 @@ class PolicyItem(Base):
     source = Column(String, nullable=False)
     source_url = Column(String, nullable=True)
     jurisdiction = Column(String, nullable=False)
-    effective_date = Column(String, nullable=False)
+    # A source's own revision/version label (e.g. "12/23") is not
+    # necessarily a regulatory effective date. Keep them distinct rather
+    # than inferring one from the other (Milestone 2.1 correction).
+    effective_date = Column(String, nullable=True)
+    source_version = Column(String, nullable=True)
     topic = Column(String, nullable=False)
     authority_level = Column(String, nullable=False)
     text = Column(Text, nullable=False)
+
+
+class EventRow(Base):
+    """Persisted applied-state for event_engine.py events, keyed by the
+    event's stable id. Definitions (predicate/apply) live in code; this
+    table only records whether/when each one has fired, so applied state
+    survives a process restart."""
+
+    __tablename__ = "events"
+
+    id = Column(String, primary_key=True)
+    event_type = Column(String, nullable=False)
+    trigger_description = Column(String, nullable=False)
+    applied = Column(Integer, nullable=False, default=0)
+    applied_at_day = Column(Integer, nullable=True)
+
+
+class InterviewSlot(Base):
+    __tablename__ = "interview_slots"
+
+    id = Column(String, primary_key=True)
+    day = Column(Integer, nullable=False)
+    start_time = Column(String, nullable=False)
+    end_time = Column(String, nullable=False)
+
+
+class Notice(Base):
+    __tablename__ = "notices"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    day = Column(Integer, nullable=False)
+    text = Column(Text, nullable=False)
+
+
+class InboxMessage(Base):
+    __tablename__ = "inbox_messages"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    day = Column(Integer, nullable=False)
+    sender = Column(String, nullable=False)
+    subject = Column(String, nullable=False)
+    body = Column(Text, nullable=False)
+    is_read = Column(Integer, nullable=False, default=0)
 
 
 class ActionLog(Base):

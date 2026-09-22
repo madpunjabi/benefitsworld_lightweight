@@ -18,7 +18,7 @@ def portal_case_view(session: Session) -> dict:
         "status": case.status,
         "open_requirements": json.loads(case.open_requirements_json),
         "reported_employer": case.reported_employer,
-        "interview": json.loads(case.interview_json) if case.interview_json else None,
+        "interview": world_state.get_interview(session),
         "recertification": json.loads(case.recertification_json) if case.recertification_json else None,
         # Canonical source of truth: uploads WHERE actually_persisted = 1.
         # No second, independently-stored "received documents" field exists
@@ -28,25 +28,32 @@ def portal_case_view(session: Session) -> dict:
 
 
 def portal_notices_view(session: Session) -> list[dict]:
-    """Notices are derived from the case's own open_requirements — there is
-    no separate notices table to keep in sync. A requirement key like
-    "earned_income_verification" becomes a plain-language action item."""
-    case = world_state.get_case(session)
-    requirements = json.loads(case.open_requirements_json)
+    return [{"id": f"N-{n.id}", "day": n.day, "text": n.text} for n in world_state.get_notices(session)]
+
+
+def interview_slots_view(session: Session) -> list[dict]:
+    """Raw, unlabeled appointment options — no conflict flag, no "recommended"
+    marker. The government scheduling surface doesn't know about Maya's
+    household calendar; whether a slot conflicts is for the agent (or,
+    for research purposes, a backend-only checkpoint helper) to work out."""
     return [
-        {
-            "id": f"notice-{requirement}",
-            "text": (
-                f"Action required: {requirement.replace('_', ' ').title()}. "
-                "Please submit supporting documentation."
-            ),
-        }
-        for requirement in requirements
+        {"id": s.id, "day": s.day, "start_time": s.start_time, "end_time": s.end_time}
+        for s in world_state.get_interview_slots(session)
     ]
 
 
 def inbox_messages_view(session: Session) -> list[dict]:
-    return []
+    return [
+        {
+            "id": m.id,
+            "day": m.day,
+            "sender": m.sender,
+            "subject": m.subject,
+            "body": m.body,
+            "is_read": bool(m.is_read),
+        }
+        for m in world_state.get_inbox_messages(session)
+    ]
 
 
 def files_view(session: Session) -> list[dict]:
@@ -91,6 +98,7 @@ def _policy_item_dict(item) -> dict:
         "source_url": item.source_url,
         "jurisdiction": item.jurisdiction,
         "effective_date": item.effective_date,
+        "source_version": item.source_version,
         "topic": item.topic,
         "text": item.text,
     }

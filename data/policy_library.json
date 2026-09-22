@@ -1,7 +1,13 @@
 {
-  "version": "0.2",
-  "frozen_source_copy": "data/policy_sources/SAR7A_12-23.pdf",
-  "frozen_source_excerpts": "data/policy_sources/SAR7A_12-23_excerpts.txt",
+  "version": "0.3",
+  "frozen_source_copy": [
+    "data/policy_sources/SAR7A_12-23.pdf",
+    "data/policy_sources/CF37_11-16.pdf"
+  ],
+  "frozen_source_excerpts": [
+    "data/policy_sources/SAR7A_12-23_excerpts.txt",
+    "data/policy_sources/CF37_11-16_excerpts.txt"
+  ],
   "items": [
     {
       "id": "POL-001",
@@ -9,7 +15,8 @@
       "source": "California Department of Social Services",
       "source_url": "https://www.cdss.ca.gov/Portals/9/Additional-Resources/Forms-and-Brochures/2020/Q-T/SAR7A.pdf?ver=2024-02-02-110154-403",
       "jurisdiction": "California",
-      "effective_date": "2023-12",
+      "effective_date": null,
+      "source_version": "12/23",
       "topic": "case_review_update",
       "authority_level": "state_agency_official_instructions",
       "text": "Pre-printed information: Some sections on the SAR 7 will already have information you reported in the past under \"Here is what we know.\" You will need to review the information we have about you and every member of your household and then answer the question(s) asked under the \"Update or add new\" sub-sections. If you check \"Yes, fill in below\" you will need to write in the updated or new information. If you check \"No\" then go to the next question or section. The Income section follows the same pattern: \"Here is what we know: This section shows what we have about you and every member of your household. You need to review this.\" (SAR 7A (12/23), pp. 2, 6.)"
@@ -20,7 +27,8 @@
       "source": "California Department of Social Services",
       "source_url": "https://www.cdss.ca.gov/Portals/9/Additional-Resources/Forms-and-Brochures/2020/Q-T/SAR7A.pdf?ver=2024-02-02-110154-403",
       "jurisdiction": "California",
-      "effective_date": "2023-12",
+      "effective_date": null,
+      "source_version": "12/23",
       "topic": "income_verification",
       "authority_level": "state_agency_official_instructions",
       "text": "Update or add new income: If there has been a change since you last reported or there will be a change within the next 6 months to your earned or unearned income, check \"Yes, fill in below\" and tell us the change(s). If you check \"No\", move on to the next question. List all earned and unearned income you got in the report month. Write (1) the name of who got the income, (2) what the change is and the date of the change, (3) where they got the income from (4) how often paid, (5) the total gross amount they got and date(s) got it, (6) the number of hours worked in the month if employed, (7) attach proof. (SAR 7A (12/23), pp. 6-7.)"
@@ -31,10 +39,35 @@
       "source": "California Department of Social Services",
       "source_url": "https://www.cdss.ca.gov/Portals/9/Additional-Resources/Forms-and-Brochures/2020/Q-T/SAR7A.pdf?ver=2024-02-02-110154-403",
       "jurisdiction": "California",
-      "effective_date": "2023-12",
+      "effective_date": null,
+      "source_version": "12/23",
       "topic": "proof_of_income",
       "authority_level": "state_agency_official_instructions",
       "text": "Attach proof. Check \"I have attached proof\" at the bottom of the section if you are giving us proof of your income with your SAR 7. Check \"I do not have proof/I need help getting proof\" if you need help getting proof. Proof of earned income includes but is not limited to check stubs, copies of checks or statements from the employer, or receipts or proof of earnings if self-employed. Proof of the change can be a letter from the employer or a signed written statement from you. (SAR 7A (12/23), p. 7.)"
+    },
+    {
+      "id": "POL-004",
+      "title": "SAR 7 Eligibility Status Report Instructions (SAR 7A, 12/23) — Reporting Housing Costs",
+      "source": "California Department of Social Services",
+      "source_url": "https://www.cdss.ca.gov/Portals/9/Additional-Resources/Forms-and-Brochures/2020/Q-T/SAR7A.pdf?ver=2024-02-02-110154-403",
+      "jurisdiction": "California",
+      "effective_date": null,
+      "source_version": "12/23",
+      "topic": "housing_verification",
+      "authority_level": "state_agency_official_instructions",
+      "text": "Rent and Utilities: If your address has changed since you last reported, check \"Yes\". If your address has changed, you must tell us what your rent and utilities are. If you check \"No\", you can move on to the next section. Tell us about your housing costs like rent, utilities, mortgage, renter's or homeowner's insurance, property taxes, and garbage/trash collection fees. If your costs have increased because you moved, be sure to list the amounts. (SAR 7A (12/23), p. 10.)"
+    },
+    {
+      "id": "POL-005",
+      "title": "CF 37 (11/16): Recertification for CalFresh Benefits — What Happens at the Interview",
+      "source": "California Department of Social Services",
+      "source_url": "https://www.cdss.ca.gov/cdssweb/entres/forms/english/cf37.pdf",
+      "jurisdiction": "California",
+      "effective_date": null,
+      "source_version": "11/16",
+      "topic": "interview_guidance",
+      "authority_level": "state_agency_official_instructions",
+      "text": "The County will send you an interview appointment letter to discuss this application. Most interviews are done by phone, but can also be done in person at the County office or other place if arranged with the County. During the interview, the County will go over the information on the application and will ask questions to recertify you for CalFresh and determine your benefits. To avoid a delay, provide proof of any changes in circumstance at the time of the interview. Examples are change in income; change in people buying/eating together, change in housing costs, etc. Keep your interview even if you do not have the proof. The County may be able to help to get the proof needed. (CF 37 (11/16), p. 1.)"
     }
   ]
 }

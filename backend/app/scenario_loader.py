@@ -75,7 +75,8 @@ def load_scenario(session: Session, seed: dict | None = None, policy_library: di
                 source=item["source"],
                 source_url=item.get("source_url"),
                 jurisdiction=item["jurisdiction"],
-                effective_date=item["effective_date"],
+                effective_date=item.get("effective_date"),
+                source_version=item.get("source_version"),
                 topic=item["topic"],
                 authority_level=item["authority_level"],
                 text=item["text"],
@@ -92,5 +93,8 @@ def load_scenario(session: Session, seed: dict | None = None, policy_library: di
                 source="household",
             )
         )
+
+    for notice in seed.get("initial_notices", []):
+        session.add(models.Notice(day=notice["day"], text=notice["text"]))
 
     session.commit()

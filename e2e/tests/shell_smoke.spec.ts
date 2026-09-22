@@ -1,7 +1,16 @@
 import path from "node:path";
 import { expect, test } from "@playwright/test";
+import { resetEnvironment } from "./helpers";
 
 const SCREENSHOT_DIR = path.resolve(__dirname, "../screenshots");
+
+// The whole e2e run shares one live backend/DB (see playwright.config.ts's
+// workers: 1 note). Later specs advance simulated time and mutate state,
+// so these Milestone-1 assertions — which assume a pristine Day-0 world —
+// need their own reset regardless of what ran before them.
+test.beforeEach(async ({ request }) => {
+  await resetEnvironment(request);
+});
 
 const AGENT_ROUTES: Array<[string, string]> = [
   ["/portal", "page-portal"],
