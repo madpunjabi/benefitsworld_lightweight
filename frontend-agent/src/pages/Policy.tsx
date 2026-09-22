@@ -67,11 +67,7 @@ export default function Policy() {
                 {selected.source_url ? (
                   <>
                     {" "}
-                    (
-                    <a href={selected.source_url} target="_blank" rel="noreferrer">
-                      link
-                    </a>
-                    )
+                    (<span data-testid="policy-source-url">{selected.source_url}</span>)
                   </>
                 ) : null}
                 <br />

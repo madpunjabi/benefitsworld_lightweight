@@ -617,3 +617,61 @@ consecutive full runs.
   machinery, `case_state.json`/`task_queue.json`/`evidence_log.jsonl`,
   full persistence harness, full failure taxonomy, additional scenarios,
   arbitrary Lab editor, or model integration).
+
+## Isolation patch — BW-001-v1.0.1 (post-freeze, not a scenario change)
+
+While building the Milestone 6 benchmark-agent runner (a separate `claude`
+CLI process, outside this repo, in `/tmp/bw001-fable-runner/`) a real
+containment gap was found empirically, not just reasoned about: the
+Policy Library page (`/policy`) rendered each policy item's real source
+citation as a clickable external anchor (`<a href={source_url}
+target="_blank">`, from the Milestone 2.1 re-sourcing). A `computer`
+tool left-click on that link opened a genuine new tab and loaded the
+real `cdss.ca.gov` PDF — without ever calling the `navigate` MCP tool,
+so the runner's `navigate`-only `PreToolUse` hook never saw it. Verified
+live: `tabs_context_mcp` showed the new tab actually landed on
+`https://www.cdss.ca.gov/...`.
+
+**Fix (`frontend-agent/src/pages/Policy.tsx`)**: the source URL is still
+shown to the user, in full, next to the source name — just as plain text
+(`<span data-testid="policy-source-url">`) instead of an anchor. No
+policy text, source metadata, scenario behavior, or evaluator logic
+changed. The benchmark agent doesn't need outbound web access — the
+relevant policy content is already frozen locally in
+`data/policy_library.json` / `data/policy_sources/`.
+
+**Regression test** (`e2e/tests/agent_frontend_isolation.spec.ts`, new
+`describe` block): visits every agent route at Day 0 and Day 18 (the
+furthest scripted point, maximizing rendered content — interview,
+housing, updated-income events all fired), clicking through every
+policy item, file, and inbox message to force any per-item detail pane
+to render, and asserts every `<a href>` on the page resolves to
+`http://localhost:5173`. Verified both directions: fails against the
+pre-fix `Policy.tsx` (caught the exact `cdss.ca.gov` link), passes
+against the fix.
+
+**Runner-side defense-in-depth** (outside this repo, in
+`/tmp/bw001-fable-runner/`, not part of BW-001 itself): a new
+`PostToolUse` hook (`post-tool-guard.sh`) runs after every `navigate`,
+`computer`, or `tabs_context_mcp` call, inspects the resulting tab
+list, and immediately halts the run (`continue: false`) plus logs
+`ISOLATION_VIOLATION` if any tab is outside `http://localhost:5173`.
+Deliberately not matched against `get_page_text`/`read_page`/`find`,
+since those return arbitrary page body text that may legitimately
+*mention* a URL as visible text (e.g. the now-unlinked policy source
+citation) without any tab having navigated there — matching that text
+would false-positive on the very content this patch intentionally kept
+visible. This hook is explicitly secondary: it can't prevent a single
+off-origin page load (the tab already loaded before the hook runs), it
+only stops the run immediately after. The `PreToolUse` deny on
+`navigate` remains the primary protection.
+
+Also reduced Fable's tool allowlist by two: `tabs_create_mcp` and
+`tabs_close_mcp` are no longer offered. Not needed for normal BW-001
+interaction — `navigate`, called standalone, creates its own tab via an
+implicit `tabs_context_mcp{createIfEmpty:true}` — and removing them
+shrinks the tool surface with no loss of function.
+
+This patch does not move or overwrite the `BW-001-v1` tag. It is
+committed and tagged separately as `BW-001-v1.0.1`; benchmark runs
+should record that exact tag, not `BW-001-v1`.
