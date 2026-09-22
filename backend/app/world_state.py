@@ -186,6 +186,21 @@ def get_interview_slot(session: Session, slot_id: str) -> models.InterviewSlot |
     return session.get(models.InterviewSlot, slot_id)
 
 
+# --- Recertification ------------------------------------------------------
+# Raw persisted fields only; computed display status lives in
+# app/recertification.py, which is the only caller of the setter below.
+
+def get_recertification_raw(session: Session) -> dict | None:
+    case = get_case(session)
+    return json.loads(case.recertification_json) if case.recertification_json else None
+
+
+def set_recertification_raw(session: Session, data: dict) -> None:
+    case = get_case(session)
+    case.recertification_json = json.dumps(data)
+    session.commit()
+
+
 # --- Notices --------------------------------------------------------------
 
 def add_notice(session: Session, day: int, text: str) -> None:

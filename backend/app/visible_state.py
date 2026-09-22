@@ -8,7 +8,7 @@ import json
 
 from sqlalchemy.orm import Session
 
-from app import world_state
+from app import recertification, world_state
 
 
 def portal_case_view(session: Session) -> dict:
@@ -19,7 +19,7 @@ def portal_case_view(session: Session) -> dict:
         "open_requirements": json.loads(case.open_requirements_json),
         "reported_employer": case.reported_employer,
         "interview": world_state.get_interview(session),
-        "recertification": json.loads(case.recertification_json) if case.recertification_json else None,
+        "recertification": recertification.get_view(session),
         # Canonical source of truth: uploads WHERE actually_persisted = 1.
         # No second, independently-stored "received documents" field exists
         # anywhere in the schema.

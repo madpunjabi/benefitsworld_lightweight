@@ -45,3 +45,9 @@ class ScheduleInterviewOut(BaseModel):
     day: int
     start_time: str
     end_time: str
+
+
+class RecertificationSubmitOut(BaseModel):
+    status: str
+    submitted_at_day: int | None
+    snapshot_applied_event_ids: list[str]

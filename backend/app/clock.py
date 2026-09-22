@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from app import event_engine, world_state
+from app import scenario_registry, world_state
 
 
 def advance_to(session: Session, to_day: int) -> dict:
@@ -11,7 +11,7 @@ def advance_to(session: Session, to_day: int) -> dict:
         raise ValueError("cannot move simulated time backwards")
 
     world_state.set_current_sim_day(session, to_day)
-    applied = event_engine.default_engine().tick(session)
+    applied = scenario_registry.engine_for(session).tick(session)
 
     world_state.log_action(
         session,

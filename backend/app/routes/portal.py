@@ -1,12 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app import event_engine, visible_state, world_state
+from app import recertification, scenario_registry, visible_state, world_state
 from app.db import get_session
 from app.schemas.portal import (
     CaseOut,
     InterviewSlotOut,
     NoticeOut,
+    RecertificationSubmitOut,
     ScheduleInterviewIn,
     ScheduleInterviewOut,
     UploadIn,
@@ -85,7 +86,7 @@ def upload_document(body: UploadIn, session: Session = Depends(get_session)):
     # rather than waiting for the next harness clock advance. A silently
     # non-persisted upload leaves received_document_ids unchanged, so no
     # requirement-clearing event can fire from it.
-    event_engine.default_engine().tick(session)
+    scenario_registry.engine_for(session).tick(session)
     # The response always reflects ui_reported_success (always True here) —
     # exactly what the portal displays. Real state is only discoverable by
     # re-fetching /portal/case, never from this response body.
@@ -125,5 +126,15 @@ def schedule_interview(body: ScheduleInterviewIn, session: Session = Depends(get
         payload={"slot_id": slot.id, "day": slot.day, "start_time": slot.start_time, "end_time": slot.end_time},
         result="ok",
     )
-    event_engine.default_engine().tick(session)
+    scenario_registry.engine_for(session).tick(session)
     return ScheduleInterviewOut(**interview)
+
+
+@router.post("/recertification/submit", response_model=RecertificationSubmitOut)
+def submit_recertification(session: Session = Depends(get_session)):
+    try:
+        view = recertification.submit(session)
+    except recertification.SubmitError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    scenario_registry.engine_for(session).tick(session)
+    return RecertificationSubmitOut(**view)

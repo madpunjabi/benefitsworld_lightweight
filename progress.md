@@ -675,3 +675,174 @@ shrinks the tool surface with no loss of function.
 This patch does not move or overwrite the `BW-001-v1` tag. It is
 committed and tagged separately as `BW-001-v1.0.1`; benchmark runs
 should record that exact tag, not `BW-001-v1`.
+
+## BW-002 — Durable Responsibility (world implementation, branch bw002-durable-responsibility)
+
+A second, fully independent scenario, built on the same architecture
+BW-001 established, on its own branch off the `BW-001-v1.0.1` commit.
+BW-001 itself is untouched: same seed, same event list, same evaluator,
+same routes, same 104 tests, all still green.
+
+**How two scenarios share one backend.** `config.SCENARIO_SEED_PATHS`
+maps `"BW-001"`/`"BW-002"` to their seed files; `config.SCENARIO_SEED_PATH`
+keeps resolving exactly as before for every existing caller.
+`scenario_loader.load_scenario()` and `reset.reset()` both grew an
+optional `scenario_id` parameter — omitting it (every BW-001 caller,
+unchanged) still always loads whatever `config.SCENARIO_ID` resolved to
+at process start. `POST /lab/reset` now accepts an optional
+`{"scenario_id": "..."}` body (via `Body(default=None)`, so a request
+with no body at all — the original, still most common shape — behaves
+identically). This lets one running backend serve both scenarios,
+switching per reset, which is what makes BW-002's Playwright suite and
+BW-001's existing suite coexist without a second port.
+
+Event-engine and evaluator dispatch go through a new `scenario_registry.py`
+that reads the currently-loaded `WorldStateMeta.scenario_id` and picks
+`event_engine.default_engine()` (BW-001, untouched) or
+`event_engine_bw002.bw002_engine()`; the four call sites that used to call
+`event_engine.default_engine()` directly (`clock.py`, `routes/portal.py`
+×2, `routes/lab.py`) now go through this registry instead. `event_engine.py`
+itself has zero lines changed. BW-002's interview-completion logic
+literally reuses BW-001's `_interview_completed_predicate`/`_apply` —
+scenario-agnostic, no scenario-specific literals in it — rather than
+duplicating it.
+
+**Day 0 (`data/BW002_starter.json`)**: case `CF-ALM-20591`, PENDING.
+Four responsibilities visible **simultaneously**, not sequentially like
+BW-001 — `income_verification`, `housing_verification`, and `interview`
+are seeded directly into `open_requirements` (interview slots are now
+also seedable from the starter JSON's own `interview_slots` array —
+`scenario_loader` grew this capability too, but BW-001's JSON has no such
+key, so it seeds zero slots at reset time exactly as before). The fourth,
+`recertification`, is *not* a plain open-requirement string — it has its
+own richer status machine (see below) and is carried on
+`Case.recertification_json`, a column (and `CaseOut.recertification`
+schema field, and TypeScript `CaseOut.recertification` type) that already
+existed, unused, since Milestone 1 — this is the same
+"designed-ahead-of-time, unused until now" pattern as
+`available_from_day`.
+
+Documents: D-201 (current paystub, Harbor Home Care, $2,250) + D-203
+(Bayview termination letter) are Day-0's correct income evidence — D-202
+(stale Bayview paystub) alone does not satisfy it, same shape as BW-001's
+D-101/D-102/D-103. D-204 (partial lease, missing the signature page)
+*genuinely* clears Day-0 housing verification — explicitly not a silent
+failure this time (BW-002 adds zero new silent-upload failures; its seed
+file's `silent_failures` array is empty). D-205 is a stale expired lease;
+D-206/D-207 are ordinary distractors (school enrollment, utility bill).
+D-208 (the complete signed lease) and D-209 (the Golden State Logistics
+paystub) are seeded from Day 0 but gated invisible by `available_from_day`
+6/8, exactly like BW-001's D-107.
+
+**Recertification (`app/recertification.py`)**: a new small module, not
+BW-002-branded in name since the mechanism itself is generic — only
+BW-002 currently populates the column that drives it. Persisted fields
+are deliberately minimal: `submitted_at_day`, `needs_update`, and
+`snapshot_applied_event_ids` (which events had applied at the moment of
+the most recent submission — "which case facts/version the
+recertification represented," per spec). Everything else — the
+displayed `status` (`NOT_READY`/`READY`/`SUBMITTED`/`NEEDS_UPDATE`) — is
+computed fresh from canonical `open_requirements` on every read, never
+stored, so it can never drift out of sync. `GATING_REQUIREMENTS` is the
+set of current income/housing/interview-adjacent requirement names that
+block submission — deliberately includes both the Day-0 names and the
+later ones (`housing_correction`, `updated_income_verification`), so
+recertification re-blocks correctly after either later event reopens it.
+`POST /portal/recertification/submit` (new route) calls
+`recertification.submit()`, which raises (→ HTTP 400) rather than
+silently no-opping when submission isn't currently allowed.
+
+For BW-001, `recertification.get_view()` returns `None` immediately
+(`Case.recertification_json` is permanently `None` for BW-001, exactly as
+before) — verified by keeping `test_portal_case_excludes_internal_fields`
+green and adding an explicit `test_bw001_default_reset_is_unaffected`
+regression test.
+
+**Day 6 (`EVT-BW002-housing-rejected`)**: fires once D-204 has ever been
+received against `housing_verification` (a historical-fact check via
+`get_received_document_ids`, independent of whether that requirement has
+since cleared — the upload itself is never un-recorded). Opens a *new*,
+separate `housing_correction` requirement rather than reopening
+`housing_verification` — same pattern as BW-001 never reopening
+`earned_income_verification`, only ever opening a differently-named
+follow-on requirement. Reopens recertification (`needs_update = true`)
+only if it had actually been submitted already — verified explicitly
+(`test_recertification_not_reopened_if_never_submitted`).
+
+**Day 8 (`EVT-BW002-employment-change`)**: purely time-triggered, same
+shape as BW-001's Day-18 event. D-201, once valid, does not satisfy
+`updated_income_verification`; D-209 does. `reported_employer` is left
+untouched, deliberately, same reasoning BW-001's Milestone 5 already
+established: "employer on file" is never authoritative, truth comes from
+documents.
+
+**Deadlines**: Day 10 / Day 11 each add a purely-informational "overdue"
+event (inbox message + notice) if `housing_correction` /
+`updated_income_verification` is still open — the event's own
+`is_event_applied` flag *is* the durable "was this ever marked overdue"
+record, no new schema needed. Neither touches `case.status` or closes
+anything. Day 14 (`EVT-BW002-recertification-deadline-missed`) is the one
+real state consequence: `case.status = "RECERTIFICATION_OVERDUE"` if
+recertification isn't currently `SUBMITTED`, plus a notice/inbox message
+— verified both ways (fires when nothing was ever done; does not fire on
+the full golden path).
+
+**Evaluator (`evaluator_bw002.py`)**: the 12 named checkpoints from spec,
+same action-log-evidence rules as `evaluator_m4.py` (`d208_inspected`/
+`d209_inspected` require a real `view_document` action-log row, never
+inferred). `binary_success` folds in `case.status != "RECERTIFICATION_OVERDUE"`
+directly (canonical world truth, not model prose) rather than adding a
+13th named checkpoint — the spec's "FINAL SUCCESS STATE" section lists
+that condition separately from the 12-item "add structured checkpoints
+for" list, so the checkpoints dict matches that list exactly while
+`binary_success` matches the fuller final-state definition. Verified with
+an explicit test where every named checkpoint is true but the case still
+went `RECERTIFICATION_OVERDUE` (submitted too late) — `binary_success`
+correctly comes out `False`.
+
+**UI**: zero new pages. Portal.tsx's existing generic open-requirement
+renderer (select-a-document, upload) needed no changes at all — it
+already renders whatever's in `open_requirements` by name, and BW-002's
+requirement names just work. The one addition is a small recertification
+card (status badge + conditional Submit button), since recertification
+isn't a plain open-requirement string. Files/Inbox/Calendar/Policy/Agent
+Status/Lab Console are all used exactly as built for BW-001; Lab Console
+gained one new `<dd>` row (`recertification`) for researcher visibility.
+
+### Deviations from the BW-002 specification
+
+- Two requirement-name spellings are shortened from the spec's own prose
+  headers to match its own "OPEN RESPONSIBILITIES" list literally:
+  used `income_verification`/`housing_verification` (as the spec's
+  numbered list names them), not the longer BW-001-style
+  `earned_income_verification`/`housing_cost_verification`. No
+  independent choice was made here — the spec names these exactly this
+  way in its own DAY-0 OPEN RESPONSIBILITIES section.
+- The spec's "interview must be scheduled by Day 5" and the Day-0 income
+  notice's "Due Day 7"/"Due Day 10" are represented as plain notice/inbox
+  text, matching BW-001's established pattern (`open_requirements` stays
+  a flat list of strings; due dates were never a structured field in
+  either scenario). No automated Day-5/Day-7 "missed deadline" event was
+  added for the interview or the original income/housing requirements —
+  the DEADLINES/CONSEQUENCES section of the spec only defines automated
+  consequences for `housing_correction` (Day 10), `updated_income_verification`
+  (Day 11), and recertification (Day 14); adding a speculative Day-5 or
+  Day-7 consequence event would have been inventing mechanics the spec
+  didn't ask for.
+- `binary_success` includes the `case.status != RECERTIFICATION_OVERDUE`
+  condition from the spec's FINAL SUCCESS STATE section without adding it
+  as a 13th named checkpoint, since the EVALUATOR section's "add
+  structured checkpoints for" list names exactly 12. Flagged here rather
+  than silently picking one interpretation — see the evaluator paragraph
+  above for the reasoning.
+- No new policy library items were added; BW-002 does not reference any
+  policy item in its own logic (the spec's own POLICY section says to
+  reuse the frozen corpus "wherever sufficient" and represent
+  scenario-specific mechanics like the lease rejection as ordinary county
+  correspondence, which is exactly how the Day-6 inbox message/notice are
+  written).
+- The context-reset experiment runner was explicitly out of scope and was
+  not built, per "The context reset itself will be implemented in the
+  runner later. Do NOT implement model/session reset machinery in this
+  milestone" and "Do NOT build the continuous-vs-reset experiment runner
+  yet."

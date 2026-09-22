@@ -16,10 +16,13 @@ export const AGENT_BASE = "http://localhost:5173";
 export const LAB_BASE = "http://localhost:5174";
 
 // Every test starts from a clean, deterministic scenario state so tests
-// are independent of run order and of each other's uploads.
-export async function resetEnvironment(request: APIRequestContext) {
+// are independent of run order and of each other's uploads. Omitting
+// scenarioId (every existing BW-001 test) always resets into BW-001,
+// regardless of whatever scenario a previous test last loaded.
+export async function resetEnvironment(request: APIRequestContext, scenarioId?: string) {
   const res = await request.post(`${API_BASE}/lab/reset`, {
     headers: { "X-Lab-Token": LAB_TOKEN },
+    data: scenarioId ? { scenario_id: scenarioId } : {},
   });
   if (!res.ok()) {
     throw new Error(`environment reset failed: ${res.status()}`);

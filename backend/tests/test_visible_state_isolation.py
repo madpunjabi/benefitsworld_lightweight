@@ -197,6 +197,7 @@ def test_public_router_has_no_lab_paths():
             "/portal/uploads",
             "/portal/interview/slots",
             "/portal/interview/schedule",
+            "/portal/recertification/submit",
             "/inbox/messages",
             "/inbox/messages/{message_id}/read",
             "/files",

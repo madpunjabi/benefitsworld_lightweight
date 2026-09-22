@@ -42,3 +42,11 @@ def lab_headers():
 @pytest.fixture()
 def agent_headers():
     return {"Origin": config.AGENT_ORIGIN}
+
+
+def reset_bw002(client, lab_headers):
+    """Shared helper: reset the shared backend into BW-002. Every BW-002
+    test must call this explicitly — the default reset() (no body, used by
+    every BW-001 test and the app's own lifespan) always loads BW-001."""
+    response = client.post("/lab/reset", json={"scenario_id": "BW-002"}, headers=lab_headers)
+    assert response.status_code == 200

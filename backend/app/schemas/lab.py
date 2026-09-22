@@ -32,6 +32,7 @@ class LabWorldStateOut(BaseModel):
     case_id: str
     open_requirements: list[str]
     interview: dict | None
+    recertification: dict | None
     applied_event_ids: list[str]
     pending_event_ids: list[str]
     uploads: list[LabUploadOut]
@@ -41,6 +42,10 @@ class LabWorldStateOut(BaseModel):
     # that. Debug convenience only; the agent never sees this framing,
     # only the underlying documents via /files.
     income_truth_document: LabIncomeTruthOut | None
+
+
+class ResetIn(BaseModel):
+    scenario_id: str | None = None
 
 
 class ResetOut(BaseModel):

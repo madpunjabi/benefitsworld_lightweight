@@ -32,6 +32,7 @@ interface WorldState {
   case_id: string;
   open_requirements: string[];
   interview: Record<string, unknown> | null;
+  recertification: Record<string, unknown> | null;
   applied_event_ids: string[];
   pending_event_ids: string[];
   uploads: LabUpload[];
@@ -94,6 +95,10 @@ export default function LabConsole() {
             <dt>Interview</dt>
             <dd data-testid="lab-interview">
               {state.interview ? JSON.stringify(state.interview) : "(not scheduled)"}
+            </dd>
+            <dt>Recertification</dt>
+            <dd data-testid="lab-recertification">
+              {state.recertification ? JSON.stringify(state.recertification) : "(not applicable)"}
             </dd>
             <dt>Applied event IDs</dt>
             <dd data-testid="lab-applied-events">

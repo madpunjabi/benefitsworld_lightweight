@@ -70,6 +70,17 @@ export default function Portal() {
     refresh();
   };
 
+  const onSubmitRecertification = async () => {
+    setStatus(null);
+    try {
+      await postJSON("/portal/recertification/submit", {});
+      setStatus("Recertification submitted.");
+    } catch {
+      setStatus("Recertification could not be submitted — requirements may still be open.");
+    }
+    refresh();
+  };
+
   return (
     <div data-testid="page-portal">
       <h2>Case Portal</h2>
@@ -174,6 +185,34 @@ export default function Portal() {
         <p className="notice" data-testid="upload-status">
           {status}
         </p>
+      )}
+
+      {caseData.recertification && (
+        <section className="card" data-testid="recertification">
+          <h3>Recertification</h3>
+          <p className="muted">
+            Status:{" "}
+            <span className="status-badge" data-testid="recertification-status">
+              {String(caseData.recertification.status)}
+            </span>
+          </p>
+          {(caseData.recertification.status === "READY" || caseData.recertification.status === "NEEDS_UPDATE") && (
+            <button data-testid="recertification-submit-button" onClick={onSubmitRecertification}>
+              Submit Recertification
+            </button>
+          )}
+          {caseData.recertification.status === "NOT_READY" && (
+            <p className="muted">
+              Recertification becomes available once your current income, housing, and interview
+              requirements are resolved.
+            </p>
+          )}
+          {caseData.recertification.status === "SUBMITTED" && (
+            <p className="muted">
+              Submitted on Day {String(caseData.recertification.submitted_at_day)}.
+            </p>
+          )}
+        </section>
       )}
 
       <section className="card" data-testid="received-documents">

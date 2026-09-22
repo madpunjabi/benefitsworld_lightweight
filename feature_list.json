@@ -57,5 +57,15 @@
   {"id": "F7.1", "milestone": 7, "description": "Frozen experiment config: scenario version, policy snapshot, model snapshot/settings, max steps, environment", "status": "failing"},
   {"id": "F7.2", "milestone": 7, "description": "3 naive + 3 persistent trials run on identical scenario/settings", "status": "failing"},
   {"id": "F7.3", "milestone": 7, "description": "comparison.md generated with binary success, checkpoint score, action count, questions, verification rate, dynamic-event capture, state drift, recovery, failure category", "status": "failing"},
-  {"id": "F7.4", "milestone": 7, "description": "Most illustrative failure trajectory preserved for review", "status": "failing"}
+  {"id": "F7.4", "milestone": 7, "description": "Most illustrative failure trajectory preserved for review", "status": "failing"},
+
+  {"id": "BW2.1", "milestone": "BW-002", "description": "BW-002 exists as a fully independent scenario (own seed/event engine/evaluator), runtime-selectable via /lab/reset {scenario_id}; default reset (no body) still always loads BW-001 unchanged", "status": "done"},
+  {"id": "BW2.2", "milestone": "BW-002", "description": "Four Day-0 responsibilities (income_verification, housing_verification, interview, recertification) visible simultaneously, not sequential", "status": "done"},
+  {"id": "BW2.3", "milestone": "BW-002", "description": "Day-6 delayed consequence: EVT-BW002-housing-rejected opens housing_correction, D-208 becomes visible, reopens a submitted recertification", "status": "done"},
+  {"id": "BW2.4", "milestone": "BW-002", "description": "Day-8 purely time-triggered EVT-BW002-employment-change opens updated_income_verification, D-209 becomes visible, reopens a submitted recertification", "status": "done"},
+  {"id": "BW2.5", "milestone": "BW-002", "description": "Recertification status machine (NOT_READY/READY/SUBMITTED/NEEDS_UPDATE) computed from canonical open_requirements plus a persisted per-submission event snapshot", "status": "done"},
+  {"id": "BW2.6", "milestone": "BW-002", "description": "Day 10/11 overdue notices for housing_correction/updated_income_verification; Day 14 case.status -> RECERTIFICATION_OVERDUE as a real world-state consequence if recertification is not current", "status": "done"},
+  {"id": "BW2.7", "milestone": "BW-002", "description": "Lightweight evaluator_bw002.py: 12 named checkpoints plus a case-status gate on binary_success, same action-log-evidence rules as evaluator_m4.py", "status": "done"},
+  {"id": "BW2.8", "milestone": "BW-002", "description": "Reuses every existing UI surface (portal/inbox/files/calendar/policy/agent-status/Lab Console); one additive recertification section in Portal.tsx", "status": "done"},
+  {"id": "BW2.9", "milestone": "BW-002", "description": "Human golden-path Playwright E2E test proves the full BW-002 world is solvable end to end", "status": "done"}
 ]

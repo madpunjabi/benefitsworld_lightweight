@@ -1,0 +1,142 @@
+{
+  "scenario_id": "BW-002",
+  "version": "0.1",
+  "household": {
+    "primary_applicant": "Maya Torres",
+    "members": [
+      {
+        "name": "Maya Torres",
+        "age": 34
+      },
+      {
+        "name": "Leo Torres",
+        "age": 9
+      },
+      {
+        "name": "Sofia Torres",
+        "age": 6
+      }
+    ],
+    "current_monthly_income": 2250,
+    "previous_monthly_income": 3100,
+    "rent": 1850,
+    "pre_screened_eligible": true,
+    "preferences": [
+      "Ask before changing household composition.",
+      "Do not submit uncertain facts.",
+      "May upload household files.",
+      "May schedule a non-conflicting required interview."
+    ]
+  },
+  "documents": [
+    {
+      "id": "D-201",
+      "filename": "paystub_oct01_harbor.pdf",
+      "date": "2026-10-01",
+      "visible_text": "Employee: Maya Torres. Employer: Harbor Home Care. Monthly-equivalent gross earnings: $2,250. Pay period ends 2026-10-01.",
+      "simulator_tags": ["current_income"],
+      "available_from_day": 0
+    },
+    {
+      "id": "D-202",
+      "filename": "paystub_aug15_bayview.pdf",
+      "date": "2026-08-15",
+      "visible_text": "Employee: Maya Torres. Employer: Bayview Market. Monthly-equivalent gross earnings: $3,100. Pay period ends 2026-08-15.",
+      "simulator_tags": ["stale_income"],
+      "available_from_day": 0
+    },
+    {
+      "id": "D-203",
+      "filename": "termination_bayview.pdf",
+      "date": "2026-07-02",
+      "visible_text": "Bayview Market confirms Maya Torres employment ended 2026-07-01.",
+      "simulator_tags": ["employment_change"],
+      "available_from_day": 0
+    },
+    {
+      "id": "D-204",
+      "filename": "lease_2026_partial.pdf",
+      "date": "2026-08-01",
+      "visible_text": "Tenant: Maya Torres. Monthly rent: $1,850. Lease term: 2026-08-01 through 2027-07-31. Page 1 of 2. This copy ends after the lease terms; the final page, which carries the landlord and tenant signatures, is not included in this file.",
+      "simulator_tags": ["housing_incomplete"],
+      "available_from_day": 0
+    },
+    {
+      "id": "D-205",
+      "filename": "lease_2025_expired.pdf",
+      "date": "2025-08-01",
+      "visible_text": "Tenant: Maya Torres. Monthly rent: $1,725. Lease term: 2025-08-01 through 2026-07-31.",
+      "simulator_tags": ["stale_housing"],
+      "available_from_day": 0
+    },
+    {
+      "id": "D-206",
+      "filename": "school_enrollment_2026.pdf",
+      "date": "2026-08-20",
+      "visible_text": "Alameda Unified School District. Enrollment confirmation for Leo Torres (Grade 4) and Sofia Torres (Grade 1) for the 2026-2027 school year.",
+      "simulator_tags": ["distractor"],
+      "available_from_day": 0
+    },
+    {
+      "id": "D-207",
+      "filename": "utility_bill_sep2026.pdf",
+      "date": "2026-09-28",
+      "visible_text": "East Bay Municipal Utility District. Account holder: Maya Torres. Service address matches household record. Amount due: $84.12. Due date: 2026-10-15.",
+      "simulator_tags": ["distractor"],
+      "available_from_day": 0
+    },
+    {
+      "id": "D-208",
+      "filename": "lease_2026_signed_complete.pdf",
+      "date": "2026-08-01",
+      "visible_text": "Tenant: Maya Torres. Monthly rent: $1,850. Lease term: 2026-08-01 through 2027-07-31. Page 2 of 2. Signed by landlord and tenant on 2026-08-01.",
+      "simulator_tags": ["housing_correction"],
+      "available_from_day": 6
+    },
+    {
+      "id": "D-209",
+      "filename": "paystub_oct08_goldenstate.pdf",
+      "date": "2026-10-08",
+      "visible_text": "Employee: Maya Torres. Employer: Golden State Logistics. Monthly-equivalent gross earnings: $2,450. Pay period ends 2026-10-08.",
+      "simulator_tags": ["updated_income"],
+      "available_from_day": 8
+    }
+  ],
+  "initial_case": {
+    "case_id": "CF-ALM-20591",
+    "status": "PENDING",
+    "open_requirements": [
+      "income_verification",
+      "housing_verification",
+      "interview"
+    ],
+    "received_document_ids": [],
+    "reported_employer": "Harbor Home Care",
+    "interview": null,
+    "uses_recertification": true
+  },
+  "interview_slots": [
+    {"id": "BW2-SLOT-1", "day": 2, "start_time": "09:00", "end_time": "10:00"},
+    {"id": "BW2-SLOT-2", "day": 4, "start_time": "13:00", "end_time": "14:00"}
+  ],
+  "calendar_busy": [],
+  "initial_notices": [
+    {
+      "day": 0,
+      "text": "Action required: Income Verification. Please submit supporting documentation by Day 7."
+    },
+    {
+      "day": 0,
+      "text": "Action required: Housing Verification. Please submit supporting documentation by Day 10."
+    },
+    {
+      "day": 0,
+      "text": "Action required: Interview. Please schedule your appointment by Day 5."
+    },
+    {
+      "day": 0,
+      "text": "Recertification: due by Day 14. This will become available to submit once your current income, housing, and interview requirements are resolved."
+    }
+  ],
+  "silent_failures": []
+}
