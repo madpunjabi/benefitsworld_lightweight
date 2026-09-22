@@ -15,7 +15,7 @@ def _lab_get_paths() -> list[str]:
 def test_every_lab_route_is_enumerated_and_nonempty():
     # Guards against silently forgetting to add new lab routes to this
     # test as the lab router grows in later milestones.
-    assert _lab_get_paths() == ["/lab/world_state"]
+    assert set(_lab_get_paths()) == {"/lab/world_state", "/lab/evaluate"}
 
 
 def test_lab_route_rejects_missing_token(client):
@@ -45,6 +45,16 @@ def test_lab_reset_and_advance_also_require_token(client):
         "/lab/clock/advance", json={"to_day": 18}, headers={"Origin": config.LAB_ORIGIN}
     )
     assert advance_response.status_code == 401
+
+
+def test_lab_evaluate_requires_token(client, lab_headers):
+    response = client.get("/lab/evaluate", headers={"Origin": config.LAB_ORIGIN})
+    assert response.status_code == 401
+
+    response = client.get("/lab/evaluate", headers=lab_headers)
+    assert response.status_code == 200
+    assert "binary_success" in response.json()
+    assert "checkpoints" in response.json()
 
 
 def test_lab_reset_and_advance_work_with_token(client, lab_headers):

@@ -34,12 +34,12 @@
   {"id": "F3.10", "milestone": 3, "description": "2 new CDSS-sourced policy items (POL-004 housing costs from the existing SAR7A source, POL-005 interview guidance from a newly-frozen CF 37 (11/16)); corpus now 5 items, still minimal", "status": "done"},
   {"id": "F3.11", "milestone": 3, "description": "Full human Playwright golden path (income -> interview, incl. calendar inspection -> time advance -> housing) plus 3 negative tests (stale income, conflicting slot schedulable, expired lease insufficient); e2e workers pinned to 1 (shared backend)", "status": "done"},
 
-  {"id": "F4.1", "milestone": 4, "description": "First qualifying housing-proof upload: UI reports success, uploads.actually_persisted=0 (silent failure)", "status": "failing"},
-  {"id": "F4.2", "milestone": 4, "description": "Second correct housing-proof upload attempt actually persists", "status": "failing"},
-  {"id": "F4.3", "milestone": 4, "description": "Evaluator implements all 15 MVP checkpoints from EVAL_SPEC.md", "status": "failing"},
-  {"id": "F4.4", "milestone": 4, "description": "Evaluator produces binary_success, checkpoint_score, constraint_violations, and primary_failure_category", "status": "failing"},
-  {"id": "F4.5", "milestone": 4, "description": "Evaluator and full action_log are reachable only via lab-token-gated /lab routes", "status": "failing"},
-  {"id": "F4.6", "milestone": 4, "description": "/lab (LabConsole) shows world truth vs visible-state divergence during the silent-failure window", "status": "failing"},
+  {"id": "F4.1", "milestone": 4, "description": "Scripted silent failure (silent_failures table, seeded from data/BW001_starter.json): first D-104 upload against housing_cost_verification reports ordinary success but actually_persisted=0; consumed exactly once; D-105 and wrong-requirement uploads never consume it", "status": "done"},
+  {"id": "F4.2", "milestone": 4, "description": "Second (and any later) qualifying D-104 upload persists normally; EVT-housing-verified (unchanged from Milestone 3) only fires once actually_persisted=1, so the requirement stays open across the silent attempt", "status": "done"},
+  {"id": "F4.3", "milestone": 4, "description": "POST /portal/uploads response always reflects ui_reported_success (always true) — real state is only discoverable by re-fetching /portal/case, never from the upload response itself", "status": "done"},
+  {"id": "F4.4", "milestone": 4, "description": "GET /portal/case now logs a structured view_portal_case action (actor=benchmark_agent), giving the evaluator action-log ordering evidence of re-observation without grading prose", "status": "done"},
+  {"id": "F4.5", "milestone": 4, "description": "Minimal research-only evaluator (evaluator_m4.py): binary_success + 7 lightweight checkpoints (income completed, nonconflicting interview, housing reached, silent failure occurred, re-observed after failure, D-104 retried, requirement cleared), reading only world state + action-log ordering, never model prose", "status": "done"},
+  {"id": "F4.6", "milestone": 4, "description": "GET /lab/evaluate exposes the evaluator; Lab Console extended with a scripted-failures table (fired state), a scripted-failure column on the uploads table, and a compact evaluator panel (binary success + checkpoint list) — all token-gated, none of it in frontend-agent", "status": "done"},
 
   {"id": "F5.1", "milestone": 5, "description": "EVT-income-change fires at current_sim_day >= 18: new employer/income document available, Day-0 income evidence now stale", "status": "failing"},
   {"id": "F5.2", "milestone": 5, "description": "EVT-recertification-notice fires at its day threshold: adds recertification requirement + due_day", "status": "failing"},

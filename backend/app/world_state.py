@@ -100,6 +100,37 @@ def log_action(session: Session, actor: str, sim_day: int, action_type: str, pay
     session.commit()
 
 
+def get_action_log(session: Session) -> list[models.ActionLog]:
+    return session.query(models.ActionLog).order_by(models.ActionLog.id).all()
+
+
+# --- Scripted silent failures --------------------------------------------
+
+def get_silent_failures(session: Session) -> list[models.SilentFailure]:
+    return session.query(models.SilentFailure).order_by(models.SilentFailure.id).all()
+
+
+def get_unconsumed_silent_failure(
+    session: Session, document_id: str, requirement: str
+) -> models.SilentFailure | None:
+    return (
+        session.query(models.SilentFailure)
+        .filter(
+            models.SilentFailure.document_id == document_id,
+            models.SilentFailure.requirement == requirement,
+            models.SilentFailure.consumed == 0,
+        )
+        .first()
+    )
+
+
+def consume_silent_failure(session: Session, failure_id: str) -> None:
+    row = session.get(models.SilentFailure, failure_id)
+    if row is not None:
+        row.consumed = 1
+        session.commit()
+
+
 # --- Requirements -----------------------------------------------------
 
 def get_open_requirements(session: Session) -> list[str]:
@@ -302,4 +333,8 @@ def snapshot(session: Session) -> dict:
             r.id: r.applied_at_day
             for r in session.query(models.EventRow).order_by(models.EventRow.id).all()
         },
+        "silent_failures": [
+            {"id": f.id, "document_id": f.document_id, "requirement": f.requirement, "consumed": f.consumed}
+            for f in get_silent_failures(session)
+        ],
     }

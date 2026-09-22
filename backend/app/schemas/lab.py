@@ -11,6 +11,13 @@ class LabUploadOut(BaseModel):
     scripted_failure_id: str | None
 
 
+class LabSilentFailureOut(BaseModel):
+    id: str
+    document_id: str
+    requirement: str
+    consumed: bool
+
+
 class LabWorldStateOut(BaseModel):
     scenario_id: str
     scenario_version: str
@@ -22,6 +29,7 @@ class LabWorldStateOut(BaseModel):
     applied_event_ids: list[str]
     pending_event_ids: list[str]
     uploads: list[LabUploadOut]
+    silent_failures: list[LabSilentFailureOut]
 
 
 class ResetOut(BaseModel):
@@ -35,3 +43,8 @@ class AdvanceIn(BaseModel):
 class AdvanceOut(BaseModel):
     current_sim_day: int
     events_applied: list[str]
+
+
+class EvaluateOut(BaseModel):
+    binary_success: bool
+    checkpoints: dict[str, bool]

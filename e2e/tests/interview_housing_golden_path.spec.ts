@@ -1,6 +1,6 @@
 import path from "node:path";
 import { expect, test } from "@playwright/test";
-import { AGENT_BASE, advanceTime, resetEnvironment } from "./helpers";
+import { AGENT_BASE, LAB_BASE, advanceTime, resetEnvironment } from "./helpers";
 
 const SCREENSHOT_DIR = path.resolve(__dirname, "../screenshots");
 
@@ -87,14 +87,37 @@ test("human golden path: income -> interview -> housing, entirely through the vi
   await expect(page.getByTestId("file-preview-text")).toContainText("2025-08-01 through 2026-07-31");
   await page.screenshot({ path: path.join(SCREENSHOT_DIR, "m3-07-leases.png") });
 
-  // 20. Upload the current lease (D-104).
+  // 20. Upload the current lease (D-104) — first attempt hits the
+  // scripted silent failure: the portal shows its ordinary success
+  // message, but the backend does not persist it.
   await page.goto(`${AGENT_BASE}/portal`);
   await page.getByTestId("requirement-select-housing_cost_verification").selectOption("D-104");
   await page.getByTestId("requirement-upload-housing_cost_verification").click();
+  await expect(page.getByTestId("upload-status")).toContainText("Uploaded");
+  await page.screenshot({ path: path.join(SCREENSHOT_DIR, "m4-01-apparent-upload-success.png") });
 
-  // 21-22. Housing evidence received; requirement clears.
+  // 5-7 (re-observe): housing requirement is still open, D-104 is absent.
+  await page.reload();
+  await expect(page.getByTestId("requirement-housing_cost_verification")).toBeVisible();
+  await expect(page.getByTestId("received-doc-D-104")).toHaveCount(0);
+  await page.screenshot({ path: path.join(SCREENSHOT_DIR, "m4-02-portal-unresolved.png") });
+
+  // 8. Retry D-104.
+  await page.getByTestId("requirement-select-housing_cost_verification").selectOption("D-104");
+  await page.getByTestId("requirement-upload-housing_cost_verification").click();
+
+  // 9-11. Re-observe: D-104 received, requirement cleared.
   await page.reload();
   await expect(page.getByTestId("received-doc-D-104")).toBeVisible();
   await expect(page.getByTestId("requirement-housing_cost_verification")).toHaveCount(0);
-  await page.screenshot({ path: path.join(SCREENSHOT_DIR, "m3-08-housing-cleared.png") });
+  await page.screenshot({ path: path.join(SCREENSHOT_DIR, "m4-03-portal-resolved.png") });
+
+  // 12-13. Inspect the research-only Lab evaluator.
+  await page.goto(`${LAB_BASE}/`);
+  await expect(page.getByTestId("lab-binary-success")).toHaveText("true");
+  await expect(page.getByTestId("lab-checkpoint-silent_failure_occurred")).toHaveText("true");
+  await expect(page.getByTestId("lab-checkpoint-agent_reobserved_after_failure")).toHaveText("true");
+  await expect(page.getByTestId("lab-checkpoint-d104_retried_successfully")).toHaveText("true");
+  await expect(page.getByTestId("lab-checkpoint-housing_requirement_cleared")).toHaveText("true");
+  await page.screenshot({ path: path.join(SCREENSHOT_DIR, "m4-04-evaluator-success.png") });
 });

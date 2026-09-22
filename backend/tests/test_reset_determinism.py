@@ -34,6 +34,12 @@ def _run_full_m3_sequence(client, agent_headers, lab_headers):
     )
     client.post("/portal/interview/schedule", json={"slot_id": "SLOT-3"}, headers=agent_headers)
     client.post("/lab/clock/advance", json={"to_day": 4}, headers=lab_headers)
+    # First D-104 attempt hits the Milestone-4 scripted silent failure;
+    # the retry persists normally and clears the requirement.
+    client.post(
+        "/portal/uploads", json={"document_id": "D-104", "requirement": "housing_cost_verification"}, headers=agent_headers
+    )
+    client.get("/portal/case", headers=agent_headers)
     client.post(
         "/portal/uploads", json={"document_id": "D-104", "requirement": "housing_cost_verification"}, headers=agent_headers
     )

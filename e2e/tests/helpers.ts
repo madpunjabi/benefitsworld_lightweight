@@ -13,6 +13,7 @@ function readLabToken(): string {
 export const LAB_TOKEN = readLabToken();
 export const API_BASE = "http://localhost:8000";
 export const AGENT_BASE = "http://localhost:5173";
+export const LAB_BASE = "http://localhost:5174";
 
 // Every test starts from a clean, deterministic scenario state so tests
 // are independent of run order and of each other's uploads.

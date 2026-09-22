@@ -97,4 +97,14 @@ def load_scenario(session: Session, seed: dict | None = None, policy_library: di
     for notice in seed.get("initial_notices", []):
         session.add(models.Notice(day=notice["day"], text=notice["text"]))
 
+    for failure in seed.get("silent_failures", []):
+        session.add(
+            models.SilentFailure(
+                id=failure["id"],
+                document_id=failure["document_id"],
+                requirement=failure["requirement"],
+                consumed=0,
+            )
+        )
+
     session.commit()

@@ -107,5 +107,12 @@
       "day": 0,
       "text": "Action required: Earned Income Verification. Please submit supporting documentation."
     }
+  ],
+  "silent_failures": [
+    {
+      "id": "FAIL-first-current-lease-upload",
+      "document_id": "D-104",
+      "requirement": "housing_cost_verification"
+    }
   ]
 }

@@ -85,6 +85,12 @@ def test_housing_verified_requires_current_lease(client, agent_headers, lab_head
     assert "EVT-housing-verified" not in world_state.get_applied_event_ids(session)
     assert "housing_cost_verification" in world_state.get_open_requirements(session)
 
+    # The first D-104 attempt hits the scripted silent failure (Milestone
+    # 4) and does not persist; the second does.
+    client.post(
+        "/portal/uploads", json={"document_id": "D-104", "requirement": "housing_cost_verification"}, headers=agent_headers
+    )
+    assert "EVT-housing-verified" not in world_state.get_applied_event_ids(session)
     client.post(
         "/portal/uploads", json={"document_id": "D-104", "requirement": "housing_cost_verification"}, headers=agent_headers
     )

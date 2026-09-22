@@ -3,9 +3,9 @@ import json
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app import clock, event_engine, reset, world_state
+from app import clock, evaluator_m4, event_engine, reset, world_state
 from app.db import get_session
-from app.schemas.lab import AdvanceIn, AdvanceOut, LabWorldStateOut, ResetOut
+from app.schemas.lab import AdvanceIn, AdvanceOut, EvaluateOut, LabWorldStateOut, ResetOut
 from app.security import require_lab_token
 
 router = APIRouter(prefix="/lab", tags=["lab"], dependencies=[Depends(require_lab_token)])
@@ -39,7 +39,21 @@ def get_world_state(session: Session = Depends(get_session)):
             }
             for u in world_state.get_uploads(session)
         ],
+        silent_failures=[
+            {
+                "id": f.id,
+                "document_id": f.document_id,
+                "requirement": f.requirement,
+                "consumed": bool(f.consumed),
+            }
+            for f in world_state.get_silent_failures(session)
+        ],
     )
+
+
+@router.get("/evaluate", response_model=EvaluateOut)
+def get_evaluation(session: Session = Depends(get_session)):
+    return evaluator_m4.evaluate(session)
 
 
 @router.post("/reset", response_model=ResetOut)

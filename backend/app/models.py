@@ -67,6 +67,19 @@ class Upload(Base):
     scripted_failure_id = Column(String, nullable=True)
 
 
+class SilentFailure(Base):
+    """A scripted, one-time non-persistence: the first matching upload
+    reports success but does not actually persist. `consumed` guards it
+    from firing more than once; reset restores it to unfired."""
+
+    __tablename__ = "silent_failures"
+
+    id = Column(String, primary_key=True)
+    document_id = Column(String, nullable=False)
+    requirement = Column(String, nullable=False)
+    consumed = Column(Integer, nullable=False, default=0)
+
+
 class PolicyItem(Base):
     __tablename__ = "policy_items"
 

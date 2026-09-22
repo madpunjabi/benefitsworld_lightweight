@@ -18,7 +18,20 @@ router = APIRouter(prefix="/portal", tags=["portal"])
 
 @router.get("/case", response_model=CaseOut)
 def get_case(session: Session = Depends(get_session)):
-    return visible_state.portal_case_view(session)
+    view = visible_state.portal_case_view(session)
+    # Structured evidence that the agent re-observed portal state — used
+    # only by the research-only evaluator (evaluator_m4.py) to establish
+    # "re-observed after a silent failure" from action-log ordering, never
+    # from graded prose.
+    world_state.log_action(
+        session,
+        actor="benchmark_agent",
+        sim_day=world_state.get_current_day(session),
+        action_type="view_portal_case",
+        payload={},
+        result="ok",
+    )
+    return view
 
 
 @router.get("/notices", response_model=list[NoticeOut])
@@ -33,29 +46,49 @@ def upload_document(body: UploadIn, session: Session = Depends(get_session)):
         raise HTTPException(status_code=404, detail="document not found")
 
     day = world_state.get_current_day(session)
-    # Milestone 2/3: every upload actually persists. The silent-failure
-    # mechanic (ui_reported_success=True, actually_persisted=False on the
-    # first qualifying attempt) is introduced in Milestone 4.
+
+    # A scenario-scripted, one-time non-persistence: the first matching
+    # upload reports success (ui_reported_success=True, matching what the
+    # portal displays) but does not actually persist. Consumed on first
+    # use, so the same document/requirement pair never fails twice.
+    failure = world_state.get_unconsumed_silent_failure(session, body.document_id, body.requirement)
+    actually_persisted = failure is None
+    scripted_failure_id = failure.id if failure is not None else None
+
     world_state.create_upload(
         session,
         document_id=body.document_id,
         requirement=body.requirement,
         attempted_at_day=day,
         ui_reported_success=True,
-        actually_persisted=True,
+        actually_persisted=actually_persisted,
+        scripted_failure_id=scripted_failure_id,
     )
+    if failure is not None:
+        world_state.consume_silent_failure(session, failure.id)
+
     world_state.log_action(
         session,
         actor="benchmark_agent",
         sim_day=day,
         action_type="upload_document",
-        payload={"document_id": body.document_id, "requirement": body.requirement},
+        payload={
+            "document_id": body.document_id,
+            "requirement": body.requirement,
+            "actually_persisted": actually_persisted,
+            "scripted_failure_id": scripted_failure_id,
+        },
         result="ok",
     )
     # World truth may have just changed in a way that satisfies an event
     # predicate (e.g. the income-verified event) — re-evaluate immediately
-    # rather than waiting for the next harness clock advance.
+    # rather than waiting for the next harness clock advance. A silently
+    # non-persisted upload leaves received_document_ids unchanged, so no
+    # requirement-clearing event can fire from it.
     event_engine.default_engine().tick(session)
+    # The response always reflects ui_reported_success (always True here) —
+    # exactly what the portal displays. Real state is only discoverable by
+    # re-fetching /portal/case, never from this response body.
     return UploadOut(document_id=body.document_id, requirement=body.requirement, received=True)
 
 

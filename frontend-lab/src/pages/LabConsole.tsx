@@ -11,6 +11,13 @@ interface LabUpload {
   scripted_failure_id: string | null;
 }
 
+interface LabSilentFailure {
+  id: string;
+  document_id: string;
+  requirement: string;
+  consumed: boolean;
+}
+
 interface WorldState {
   scenario_id: string;
   scenario_version: string;
@@ -22,17 +29,25 @@ interface WorldState {
   applied_event_ids: string[];
   pending_event_ids: string[];
   uploads: LabUpload[];
+  silent_failures: LabSilentFailure[];
+}
+
+interface EvaluateResult {
+  binary_success: boolean;
+  checkpoints: Record<string, boolean>;
 }
 
 export default function LabConsole() {
   const [state, setState] = useState<WorldState | null>(null);
+  const [evaluation, setEvaluation] = useState<EvaluateResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [advanceTo, setAdvanceTo] = useState("18");
 
   const refresh = useCallback(() => {
-    labGet<WorldState>("/lab/world_state")
-      .then((s) => {
+    Promise.all([labGet<WorldState>("/lab/world_state"), labGet<EvaluateResult>("/lab/evaluate")])
+      .then(([s, e]) => {
         setState(s);
+        setEvaluation(e);
         setError(null);
       })
       .catch((e) => setError(String(e)));
@@ -81,6 +96,28 @@ export default function LabConsole() {
             <dd data-testid="lab-pending-events">{state.pending_event_ids.join(", ")}</dd>
           </dl>
 
+          <h2>Scripted failures</h2>
+          <table data-testid="lab-silent-failures-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Document</th>
+                <th>Requirement</th>
+                <th>Fired</th>
+              </tr>
+            </thead>
+            <tbody>
+              {state.silent_failures.map((f) => (
+                <tr key={f.id}>
+                  <td>{f.id}</td>
+                  <td>{f.document_id}</td>
+                  <td>{f.requirement}</td>
+                  <td data-testid={`lab-failure-fired-${f.id}`}>{String(f.consumed)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
           <h2>Canonical uploads</h2>
           {state.uploads.length === 0 ? (
             <p>(none)</p>
@@ -93,6 +130,7 @@ export default function LabConsole() {
                   <th>Day</th>
                   <th>UI reported success</th>
                   <th>Actually persisted</th>
+                  <th>Scripted failure</th>
                 </tr>
               </thead>
               <tbody>
@@ -103,10 +141,31 @@ export default function LabConsole() {
                     <td>{u.attempted_at_day}</td>
                     <td>{String(u.ui_reported_success)}</td>
                     <td>{String(u.actually_persisted)}</td>
+                    <td>{u.scripted_failure_id ?? "—"}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          )}
+
+          {evaluation && (
+            <>
+              <h2>Evaluator (research-only)</h2>
+              <dl>
+                <dt>Binary success</dt>
+                <dd data-testid="lab-binary-success">{String(evaluation.binary_success)}</dd>
+              </dl>
+              <table data-testid="lab-checkpoints-table">
+                <tbody>
+                  {Object.entries(evaluation.checkpoints).map(([name, value]) => (
+                    <tr key={name}>
+                      <td>{name}</td>
+                      <td data-testid={`lab-checkpoint-${name}`}>{String(value)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
           )}
         </>
       )}

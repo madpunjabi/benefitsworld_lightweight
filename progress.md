@@ -386,3 +386,130 @@ just the required workers:1 setting, which M2.1 already established):
 - Two pre-existing e2e flakiness sources (see above) were fixed while
   verifying this milestone; both are test-infrastructure issues, not
   regressions in Milestone 3's own code.
+
+## Milestone 4 — LEAN scripted silent failure + minimal evaluator (DONE)
+
+The user replaced the original (much larger) Milestone-4 spec with an
+explicitly "LEAN" version mid-session — no 21-checkpoint evaluator, no
+failure taxonomy, no finalized-run state machine. Built exactly that
+smaller scope.
+
+**Scripted silent failure**: a new `silent_failures` table (seeded from
+`data/BW001_starter.json`'s new `silent_failures` array — one row,
+`FAIL-first-current-lease-upload`, `document_id: D-104`,
+`requirement: housing_cost_verification`). `POST /portal/uploads` now
+checks for an unconsumed failure matching the exact `(document_id,
+requirement)` pair before persisting: if found, the upload row is written
+with `ui_reported_success=true, actually_persisted=false,
+scripted_failure_id=<id>` and the failure is marked consumed; otherwise
+it persists normally. The upload response body is unchanged either way
+(`{document_id, requirement, received: true}`) — it always reflects
+`ui_reported_success`, never `actually_persisted`, so the only way to
+discover non-persistence is a fresh `GET /portal/case` afterward. No
+frontend-agent code changes were needed at all: Milestone 2/3's
+`received_document_ids`-derived-from-`actually_persisted` and
+event-driven `open_requirements` already produce exactly the required
+externally-detectable-only-by-re-observation behavior.
+
+**Re-observation evidence**: `GET /portal/case` now logs a structured
+`view_portal_case` action (`actor=benchmark_agent`, empty payload) on
+every call. Combined with the upload action's payload now including
+`actually_persisted`/`scripted_failure_id` (research-only — action_log
+is never exposed to any public route), this gives the evaluator
+action-log-*ordering* evidence of re-observation without grading any
+prose.
+
+**Minimal evaluator** (`backend/app/evaluator_m4.py`, not wired to any
+public route): `binary_success` (all-of the 7 checkpoints) plus exactly
+the 7 lightweight checkpoints requested — `income_evidence_completed`,
+`interview_scheduled_nonconflicting` (reuses
+`evaluator_m3.selected_interview_conflicts_with_household_calendar`),
+`housing_request_reached`, `silent_failure_occurred`,
+`agent_reobserved_after_failure` (a `view_portal_case` action-log row
+with a higher id than the first failed upload's row — nothing inferred),
+`d104_retried_successfully`, `housing_requirement_cleared`. Exposed via
+`GET /lab/evaluate` (token-gated, same router as everything else).
+
+**Lab Console**: extended with a "Scripted failures" table (id, document,
+requirement, fired) and a "Scripted failure" column on the existing
+uploads table (already showed `ui_reported_success`/`actually_persisted`
+since Milestone 3), plus a compact "Evaluator (research-only)" section
+(binary success + checkpoint list). Still fully token-gated; nothing new
+reachable from or referenced by frontend-agent (confirmed by rebuilding
+and re-grepping its bundle).
+
+### Tests — all passing
+
+Backend: **91/91** (78 prior unchanged + 13 new: `test_silent_failure.py`
+covers the once-only mechanic and all 5 control cases from spec section
+16 — D-105 doesn't consume it, wrong-requirement doesn't consume it,
+reset restores it, it can't fire twice without reset, third attempt is
+ordinary; `test_evaluator_m4.py` covers all-false start, full-success
+path, unrecovered-failure "progress not success" path, a conflicting-
+interview path, and the re-observation-must-be-*after*-the-failure edge
+case; isolation and lab-token tests extended for the new route/fields).
+E2E: **12/12** (9 prior unchanged + 1 extended golden path + 1 new
+negative test), confirmed stable across 3 consecutive full runs.
+
+Two real bugs found and fixed while writing the new backend tests (both
+in test code, not app code): two of the new `test_silent_failure.py`
+tests read stale data through the pytest `session` fixture's SQLAlchemy
+identity map after a mutation made via a *different* session (an HTTP
+call through `client`) — one was fixed with `session.expire_all()`, the
+other revealed that `received_document_ids` is a flat, non-requirement-
+scoped list (true since Milestone 2), so a wrong-requirement D-104
+upload legitimately makes D-104 "received" globally even though it never
+touches `housing_cost_verification`; the test was rewritten to check
+`open_requirements` instead, which is what actually mattered.
+
+### Example evaluator output
+
+Golden path (nonconflicting interview, failure hit and recovered):
+```json
+{
+  "binary_success": true,
+  "checkpoints": {
+    "income_evidence_completed": true,
+    "interview_scheduled_nonconflicting": true,
+    "housing_request_reached": true,
+    "silent_failure_occurred": true,
+    "agent_reobserved_after_failure": true,
+    "d104_retried_successfully": true,
+    "housing_requirement_cleared": true
+  }
+}
+```
+
+Unrecovered silent failure (no retry):
+```json
+{
+  "binary_success": false,
+  "checkpoints": {
+    "income_evidence_completed": true,
+    "interview_scheduled_nonconflicting": true,
+    "housing_request_reached": true,
+    "silent_failure_occurred": true,
+    "agent_reobserved_after_failure": false,
+    "d104_retried_successfully": false,
+    "housing_requirement_cleared": false
+  }
+}
+```
+
+### Deviations from the lean Milestone-4 specification
+
+- None of the "do not build" list was touched (no failure taxonomy, no
+  20+ checkpoints, no finalized-run state machine, no Day-18/context-
+  reset/recertification/persistent-state/runner/experiment work).
+- Added `GET /lab/evaluate` as a thin endpoint wrapping
+  `evaluator_m4.evaluate()` — not explicitly requested as an endpoint in
+  the lean spec (which only asked for "minimal evaluator" as a backend
+  concept), but necessary to make the Lab Console panel and the E2E tests
+  able to observe it, and it's a one-line addition consistent with "keep
+  this compact."
+- `interview_scheduled_nonconflicting` reuses Milestone 3's
+  `evaluator_m3.py` rather than re-deriving conflict detection — avoids
+  duplicating logic; `evaluator_m3.py` itself was not modified.
+- No frontend-agent changes were needed or made — flagged explicitly
+  rather than silently doing nothing, since "extend the golden path" could
+  have been read as implying UI work.

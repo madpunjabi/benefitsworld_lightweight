@@ -17,6 +17,9 @@ FORBIDDEN_SUBSTRINGS = [
     "conflict",
     "expected_answer",
     "correct_document",
+    "binary_success",
+    "retry count",
+    "retry_count",
 ]
 
 PUBLIC_ENDPOINTS = [
@@ -114,6 +117,41 @@ def test_full_event_chain_still_leaks_nothing(client, agent_headers, lab_headers
     slots = client.get("/portal/interview/slots", headers=agent_headers).json()
     for slot in slots:
         assert set(slot.keys()) == {"id", "day", "start_time", "end_time"}
+
+
+def test_silent_failure_sequence_leaks_nothing_to_public_endpoints(client, agent_headers, lab_headers):
+    """Run income -> interview -> housing -> the scripted D-104 silent
+    failure -> a successful retry, then re-scan every public endpoint and
+    the upload response itself: no evaluator/checkpoint/scripted-failure
+    internals may appear anywhere the agent can see."""
+    client.post(
+        "/portal/uploads", json={"document_id": "D-101", "requirement": "earned_income_verification"}, headers=agent_headers
+    )
+    client.post(
+        "/portal/uploads", json={"document_id": "D-103", "requirement": "earned_income_verification"}, headers=agent_headers
+    )
+    client.post("/portal/interview/schedule", json={"slot_id": "SLOT-3"}, headers=agent_headers)
+    client.post("/lab/clock/advance", json={"to_day": 4}, headers=lab_headers)
+
+    first = client.post(
+        "/portal/uploads", json={"document_id": "D-104", "requirement": "housing_cost_verification"}, headers=agent_headers
+    )
+    assert json.dumps(first.json()).lower().count("false") == 0
+    second = client.post(
+        "/portal/uploads", json={"document_id": "D-104", "requirement": "housing_cost_verification"}, headers=agent_headers
+    )
+
+    for response in (first, second):
+        body_text = json.dumps(response.json()).lower()
+        for forbidden in FORBIDDEN_SUBSTRINGS:
+            assert forbidden not in body_text, f"/portal/uploads response leaked '{forbidden}': {body_text}"
+
+    for path in PUBLIC_ENDPOINTS:
+        response = client.get(path, headers=agent_headers)
+        assert response.status_code == 200
+        body_text = json.dumps(response.json()).lower()
+        for forbidden in FORBIDDEN_SUBSTRINGS:
+            assert forbidden not in body_text, f"{path} leaked '{forbidden}' after the silent-failure sequence: {body_text}"
 
 
 def test_public_router_has_no_lab_paths():

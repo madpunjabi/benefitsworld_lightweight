@@ -63,6 +63,12 @@ def test_inbox_message_can_be_marked_read(client, agent_headers, lab_headers):
 
 def test_current_lease_satisfies_housing_requirement(client, agent_headers, lab_headers, session):
     _complete_interview(client, agent_headers, lab_headers)
+    # First attempt hits the Milestone-4 scripted silent failure.
+    client.post(
+        "/portal/uploads", json={"document_id": "D-104", "requirement": "housing_cost_verification"}, headers=agent_headers
+    )
+    assert not evaluator_m3.current_lease_uploaded(session)
+    # Retry persists normally.
     client.post(
         "/portal/uploads", json={"document_id": "D-104", "requirement": "housing_cost_verification"}, headers=agent_headers
     )
