@@ -14,3 +14,4 @@ LAB_ORIGIN = os.environ.get("LAB_ORIGIN", "http://localhost:5174")
 
 DB_PATH = os.environ.get("DB_PATH", str(REPO_ROOT / "backend" / "benefitsworld.db"))
 SCENARIO_SEED_PATH = REPO_ROOT / "data" / "BW001_starter.json"
+POLICY_LIBRARY_PATH = REPO_ROOT / "data" / "policy_library.json"

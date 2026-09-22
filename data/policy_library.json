@@ -1,0 +1,38 @@
+{
+  "version": "0.1",
+  "items": [
+    {
+      "id": "POL-001",
+      "title": "Responding to an Income Verification Request",
+      "source": "Alameda County Human Services Agency — CalFresh Procedures Guide",
+      "source_url": null,
+      "jurisdiction": "CA-Alameda",
+      "effective_date": "2026-07-01",
+      "topic": "income_verification",
+      "authority_level": "benchmark_synthetic_instruction",
+      "text": "When a CalFresh case has an open earned-income-verification requirement, the household must submit documentation of current earnings: a recent pay statement (or equivalent) that reflects the household member's present employer and current pay period. Documentation must be legible, dated, and must identify the employer and the gross earnings for the period shown. A verification request is not satisfied by documentation of past earnings from an employer the household member no longer works for."
+    },
+    {
+      "id": "POL-002",
+      "title": "Using Current and Relevant Evidence",
+      "source": "Alameda County Human Services Agency — CalFresh Procedures Guide",
+      "source_url": null,
+      "jurisdiction": "CA-Alameda",
+      "effective_date": "2026-07-01",
+      "topic": "evidence_currency",
+      "authority_level": "benchmark_synthetic_instruction",
+      "text": "When more than one document could support a requirement, the household should rely on the most recent document that reflects present circumstances. Older records, including pay stubs, leases, or other statements whose dates precede a known change in circumstances, should not be submitted as the basis for a current determination. If it is unclear whether a document is still current, check its date against any other related documents on file (for example, a notice of employment separation) before relying on it."
+    },
+    {
+      "id": "POL-003",
+      "title": "Reporting a Change in Employment",
+      "source": "Alameda County Human Services Agency — CalFresh Procedures Guide",
+      "source_url": null,
+      "jurisdiction": "CA-Alameda",
+      "effective_date": "2026-07-01",
+      "topic": "employment_change",
+      "authority_level": "benchmark_synthetic_instruction",
+      "text": "If a household member's employer has changed since the case record was last updated, the household should provide documentation of the change along with current income evidence. Acceptable documentation includes a termination or separation notice from the prior employer, and a current pay statement from the new employer. Submitting both allows the county to correct the employer of record and verify the household's present income in the same review."
+    }
+  ]
+}

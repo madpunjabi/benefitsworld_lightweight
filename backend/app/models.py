@@ -55,6 +55,32 @@ class CalendarEvent(Base):
     source = Column(String, nullable=False)
 
 
+class Upload(Base):
+    __tablename__ = "uploads"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    document_id = Column(String, nullable=False)
+    requirement = Column(String, nullable=False)
+    attempted_at_day = Column(Integer, nullable=False)
+    ui_reported_success = Column(Integer, nullable=False)
+    actually_persisted = Column(Integer, nullable=False)
+    scripted_failure_id = Column(String, nullable=True)
+
+
+class PolicyItem(Base):
+    __tablename__ = "policy_items"
+
+    id = Column(String, primary_key=True)
+    title = Column(String, nullable=False)
+    source = Column(String, nullable=False)
+    source_url = Column(String, nullable=True)
+    jurisdiction = Column(String, nullable=False)
+    effective_date = Column(String, nullable=False)
+    topic = Column(String, nullable=False)
+    authority_level = Column(String, nullable=False)
+    text = Column(Text, nullable=False)
+
+
 class ActionLog(Base):
     __tablename__ = "action_log"
     __table_args__ = (

@@ -10,12 +10,18 @@ def load_seed() -> dict:
         return json.load(f)
 
 
-def load_scenario(session: Session, seed: dict | None = None) -> None:
+def load_policy_library() -> dict:
+    with open(config.POLICY_LIBRARY_PATH) as f:
+        return json.load(f)
+
+
+def load_scenario(session: Session, seed: dict | None = None, policy_library: dict | None = None) -> None:
     """Deterministically populate a freshly-created (empty) schema from the
     scenario seed file. Caller is responsible for creating the schema first
     (see reset.reset()). Always produces identical rows/ids given the same
     seed, since it only ever runs against an empty DB."""
     seed = seed if seed is not None else load_seed()
+    policy_library = policy_library if policy_library is not None else load_policy_library()
 
     session.add(
         models.WorldStateMeta(
@@ -58,6 +64,21 @@ def load_scenario(session: Session, seed: dict | None = None) -> None:
                 visible_text=doc["visible_text"],
                 simulator_tags_json=json.dumps(doc["simulator_tags"]),
                 available_from_day=0,
+            )
+        )
+
+    for item in policy_library["items"]:
+        session.add(
+            models.PolicyItem(
+                id=item["id"],
+                title=item["title"],
+                source=item["source"],
+                source_url=item.get("source_url"),
+                jurisdiction=item["jurisdiction"],
+                effective_date=item["effective_date"],
+                topic=item["topic"],
+                authority_level=item["authority_level"],
+                text=item["text"],
             )
         )
 

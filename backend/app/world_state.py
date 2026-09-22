@@ -21,8 +21,60 @@ def get_documents(session: Session) -> list[models.Document]:
     return session.query(models.Document).order_by(models.Document.id).all()
 
 
+def get_document(session: Session, document_id: str) -> models.Document | None:
+    return session.get(models.Document, document_id)
+
+
+def get_policy_items(session: Session) -> list[models.PolicyItem]:
+    return session.query(models.PolicyItem).order_by(models.PolicyItem.id).all()
+
+
+def get_policy_item(session: Session, policy_id: str) -> models.PolicyItem | None:
+    return session.get(models.PolicyItem, policy_id)
+
+
 def get_calendar_events(session: Session) -> list[models.CalendarEvent]:
     return session.query(models.CalendarEvent).order_by(models.CalendarEvent.id).all()
+
+
+def create_upload(
+    session: Session,
+    document_id: str,
+    requirement: str,
+    attempted_at_day: int,
+    ui_reported_success: bool,
+    actually_persisted: bool,
+    scripted_failure_id: str | None = None,
+) -> models.Upload:
+    upload = models.Upload(
+        document_id=document_id,
+        requirement=requirement,
+        attempted_at_day=attempted_at_day,
+        ui_reported_success=1 if ui_reported_success else 0,
+        actually_persisted=1 if actually_persisted else 0,
+        scripted_failure_id=scripted_failure_id,
+    )
+    session.add(upload)
+    session.commit()
+    return upload
+
+
+def get_uploads(session: Session) -> list[models.Upload]:
+    return session.query(models.Upload).order_by(models.Upload.id).all()
+
+
+def get_received_document_ids(session: Session, requirement: str | None = None) -> list[str]:
+    """The single source of truth for 'what has been received': every
+    document_id with at least one persisted (actually_persisted=1) upload,
+    optionally scoped to one requirement. No other table duplicates this."""
+    query = session.query(models.Upload.document_id).filter(models.Upload.actually_persisted == 1)
+    if requirement is not None:
+        query = query.filter(models.Upload.requirement == requirement)
+    seen: list[str] = []
+    for (document_id,) in query.order_by(models.Upload.id).all():
+        if document_id not in seen:
+            seen.append(document_id)
+    return seen
 
 
 def get_current_day(session: Session) -> int:
@@ -100,4 +152,21 @@ def snapshot(session: Session) -> dict:
             }
             for e in get_calendar_events(session)
         ],
+        "policy_items": [
+            {
+                "id": p.id,
+                "title": p.title,
+                "source": p.source,
+                "source_url": p.source_url,
+                "jurisdiction": p.jurisdiction,
+                "effective_date": p.effective_date,
+                "topic": p.topic,
+                "authority_level": p.authority_level,
+                "text": p.text,
+            }
+            for p in get_policy_items(session)
+        ],
+        # uploads deliberately excluded, for the same reason action_log is:
+        # they record what happened during a run, not scenario truth. A
+        # fresh reset always yields zero uploads regardless of prior state.
     }

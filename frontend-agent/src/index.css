@@ -1,0 +1,145 @@
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  background: #f2f2ef;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+header.site-header {
+  background: #1a3d63;
+  color: #fff;
+  padding: 12px 20px;
+}
+
+header.site-header h1 {
+  margin: 0;
+  font-size: 18px;
+}
+
+nav.site-nav {
+  background: #eee;
+  border-bottom: 1px solid #ccc;
+  padding: 8px 20px;
+}
+
+nav.site-nav a {
+  margin-right: 16px;
+  color: #1a3d63;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+nav.site-nav a:hover {
+  text-decoration: underline;
+}
+
+main {
+  max-width: 900px;
+  margin: 20px auto;
+  padding: 0 20px;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 3px;
+  background: #fde68a;
+  color: #713f12;
+  font-weight: bold;
+  font-size: 13px;
+}
+
+table.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+table.data-table th,
+table.data-table td {
+  text-align: left;
+  padding: 8px;
+  border-bottom: 1px solid #ddd;
+  font-size: 14px;
+}
+
+.notice {
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  border-radius: 3px;
+  font-size: 14px;
+}
+
+button {
+  background: #1a3d63;
+  color: #fff;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+button:hover {
+  background: #12283f;
+}
+
+select,
+input[type="text"] {
+  padding: 5px;
+  font-size: 14px;
+}
+
+.two-column {
+  display: flex;
+  gap: 20px;
+}
+
+.two-column .list-pane {
+  flex: 1;
+}
+
+.two-column .detail-pane {
+  flex: 2;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 16px;
+}
+
+.file-list-item,
+.policy-list-item {
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+}
+
+.file-list-item:hover,
+.policy-list-item:hover {
+  background: #f2f2ef;
+}
+
+.file-list-item.selected,
+.policy-list-item.selected {
+  background: #e0e9f5;
+}
+
+.muted {
+  color: #666;
+  font-size: 13px;
+}
+
+.received-tag {
+  color: #166534;
+  font-weight: bold;
+  font-size: 13px;
+}

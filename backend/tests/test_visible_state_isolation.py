@@ -11,6 +11,9 @@ FORBIDDEN_SUBSTRINGS = [
     "trigger_description",
     "applied_at_day",
     "terminal",
+    "authority_level",
+    "benchmark",
+    "distractor",
 ]
 
 PUBLIC_ENDPOINTS = [
@@ -37,7 +40,7 @@ def test_files_endpoint_excludes_simulator_tags_specifically(client, agent_heade
     response = client.get("/files", headers=agent_headers)
     assert response.status_code == 200
     for doc in response.json():
-        assert set(doc.keys()) == {"id", "filename", "date", "visible_text"}
+        assert set(doc.keys()) == {"id", "filename", "date", "type", "visible_text"}
 
 
 def test_portal_case_excludes_internal_fields(client, agent_headers):
@@ -48,9 +51,43 @@ def test_portal_case_excludes_internal_fields(client, agent_headers):
         "case_id",
         "status",
         "open_requirements",
+        "reported_employer",
         "interview",
         "recertification",
         "received_document_ids",
+    }
+
+
+def test_policy_item_excludes_authority_level(client, agent_headers):
+    response = client.get("/policy/search", headers=agent_headers)
+    assert response.status_code == 200
+    items = response.json()
+    assert len(items) > 0
+    for item in items:
+        assert set(item.keys()) == {
+            "id",
+            "title",
+            "source",
+            "source_url",
+            "jurisdiction",
+            "effective_date",
+            "topic",
+            "text",
+        }
+
+
+def test_policy_item_detail_excludes_authority_level(client, agent_headers):
+    response = client.get("/policy/POL-001", headers=agent_headers)
+    assert response.status_code == 200
+    assert set(response.json().keys()) == {
+        "id",
+        "title",
+        "source",
+        "source_url",
+        "jurisdiction",
+        "effective_date",
+        "topic",
+        "text",
     }
 
 
@@ -65,9 +102,11 @@ def test_public_router_has_no_lab_paths():
         assert path.startswith("/lab") or path in {
             "/portal/case",
             "/portal/notices",
+            "/portal/uploads",
             "/inbox/messages",
             "/files",
             "/calendar/events",
             "/policy/search",
+            "/policy/{policy_id}",
             "/agent/status",
         }

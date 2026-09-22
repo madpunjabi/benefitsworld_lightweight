@@ -73,6 +73,15 @@
       "simulator_tags": [
         "stale_housing"
       ]
+    },
+    {
+      "id": "D-106",
+      "filename": "vehicle_registration_renewal.pdf",
+      "date": "2026-08-15",
+      "visible_text": "California DMV. Vehicle registration renewal notice for Maya Torres. Vehicle: 2016 Honda Civic. Registration expires 2026-10-31. Renewal fee due: $71.",
+      "simulator_tags": [
+        "distractor"
+      ]
     }
   ],
   "initial_case": {
