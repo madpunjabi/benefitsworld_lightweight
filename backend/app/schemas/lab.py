@@ -64,3 +64,15 @@ class AdvanceOut(BaseModel):
 class EvaluateOut(BaseModel):
     binary_success: bool
     checkpoints: dict[str, bool]
+
+
+class SnapshotOut(BaseModel):
+    snapshot: dict[str, list[dict]]
+
+
+class RestoreIn(BaseModel):
+    snapshot: dict[str, list[dict]]
+
+
+class RestoreOut(BaseModel):
+    ok: bool

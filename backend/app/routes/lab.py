@@ -3,9 +3,19 @@ import json
 from fastapi import APIRouter, Body, Depends
 from sqlalchemy.orm import Session
 
-from app import clock, recertification, reset, scenario_registry, world_state
+from app import clock, recertification, reset, scenario_registry, world_snapshot, world_state
 from app.db import get_session
-from app.schemas.lab import AdvanceIn, AdvanceOut, EvaluateOut, LabWorldStateOut, ResetIn, ResetOut
+from app.schemas.lab import (
+    AdvanceIn,
+    AdvanceOut,
+    EvaluateOut,
+    LabWorldStateOut,
+    ResetIn,
+    ResetOut,
+    RestoreIn,
+    RestoreOut,
+    SnapshotOut,
+)
 from app.security import require_lab_token
 
 router = APIRouter(prefix="/lab", tags=["lab"], dependencies=[Depends(require_lab_token)])
@@ -84,3 +94,41 @@ def do_reset(body: ResetIn | None = Body(default=None), session: Session = Depen
 def do_advance(body: AdvanceIn, session: Session = Depends(get_session)):
     result = clock.advance_to(session, body.to_day)
     return AdvanceOut(**result)
+
+
+@router.get("/snapshot", response_model=SnapshotOut)
+def get_snapshot(session: Session = Depends(get_session)):
+    """Harness-only: a full, byte-for-byte dump of every row of every
+    table — not just scenario truth, but the complete run history
+    (uploads, action log, inbox, events-applied) up to this point. The
+    caller is responsible for persisting the returned snapshot (e.g. to a
+    file) if it needs to survive past this process."""
+    snap = world_snapshot.snapshot_all(session)
+    world_state.log_action(
+        session,
+        actor="harness",
+        sim_day=world_state.get_current_day(session),
+        action_type="snapshot",
+        payload={},
+        result="ok",
+    )
+    return SnapshotOut(snapshot=snap)
+
+
+@router.post("/restore", response_model=RestoreOut)
+def do_restore(body: RestoreIn, session: Session = Depends(get_session)):
+    """Harness-only: replace the entire live world with a previously
+    captured snapshot (see GET /lab/snapshot), exactly — schema rebuilt
+    from scratch, then every row reloaded. Unlike /lab/reset, this does
+    not reseed from a scenario file; it restores whatever state the
+    snapshot captured, including any post-Day-0 history."""
+    world_snapshot.restore_all(session, body.snapshot)
+    world_state.log_action(
+        session,
+        actor="harness",
+        sim_day=world_state.get_current_day(session),
+        action_type="restore",
+        payload={},
+        result="ok",
+    )
+    return RestoreOut(ok=True)

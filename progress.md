@@ -901,3 +901,62 @@ rejection, Day-8 employment change, Day-10/11 downstream deadlines,
 Day-14 recertification consequence, all documents, all other scenario
 facts, and BW-001 — reran unchanged (150 backend tests, 15 e2e tests,
 all green).
+
+## Snapshot/restore + paired runner scaffolding (post BW-002-v1)
+
+Built ahead of the eventual continuous-vs-fresh-context comparison, per
+the researcher's flow: freeze BW-002-v1 → build snapshot/restore +
+paired runner → prove Day-9 fidelity → STOP → report → fairness review
+→ only then the first paired replicate. This step covers everything
+through "prove Day-9 fidelity." No Fable session was run.
+
+**`app/world_snapshot.py`**: a full, generic (table-agnostic) dump/reload
+of every row of every table — distinct from `world_state.snapshot()`,
+which deliberately covers only the deterministic subset used for
+reset-determinism tests and excludes `uploads`/`action_log`. `restore_all()`
+reuses the exact `drop_all()`+`create_all()` mechanism `reset()` already
+uses live, on every existing `/lab/reset` call — restore is not a new
+kind of risk, just reset() reloading from a captured snapshot instead of
+a scenario JSON file. No model in this schema declares a `ForeignKey`,
+so there's no insert-order constraint between tables.
+
+**New lab-only routes**: `GET /lab/snapshot` (returns every row of every
+table) and `POST /lab/restore` (replaces the entire live world with a
+given snapshot). Both token-gated like every other `/lab/*` route;
+`test_every_lab_route_is_enumerated_and_nonempty` and the token-isolation
+tests were extended to cover them.
+
+**Day-9 fidelity, proven directly** (`backend/tests/test_bw002_snapshot_restore.py`,
+5 tests) against a rich state (uploads, action log, inbox, notices,
+interview, two recertification submissions, 7 applied events) driven up
+to Day 9 — BW-002's designated experimental interruption point, where no
+world event fires on Day 9 itself:
+- snapshotting, mutating forward to Day 14 (a real, different world —
+  `EVT-BW002-recertification-deadline-missed` would apply there if the
+  recert weren't current), then restoring reproduces the Day-9 snapshot
+  **exactly** (`restored == day9_snapshot`, verified via both the Python
+  functions and the actual `GET`/`POST /lab/snapshot`,`/lab/restore` HTTP
+  endpoints a real harness would use);
+- restoring the same snapshot twice in a row is itself deterministic;
+- the restored world is genuinely *live*, not just inert data — advancing
+  it from the restored Day 9 to Day 14 reaches the identical evaluator
+  result as the original run did.
+
+**Paired-runner scaffolding** (`/tmp/bw002-fable-runner/`, outside the
+BenefitsWorld repo, sibling to the approved `/tmp/bw001-fable-runner/`):
+`navigate-guard.sh`, `post-tool-guard.sh`, and `system-prompt.txt` are
+copied byte-for-byte unchanged — both guard scripts are already fully
+scenario-agnostic (they only ever reference the shared
+`http://localhost:5173` agent origin), and the durable-objective system
+prompt never named a case ID or mentioned BW-001-specific facts, so it
+applies to BW-002 as-is. `isolation-settings.json` mirrors the approved
+BW-001 shape, paths updated to this directory. `paired-run.sh` implements
+the 5-step protocol (`reset-day0`, `leg1-to-day9`, `snapshot-day9`,
+`continuous <session_id>`, `fresh`) as separate, individually-invoked
+commands — deliberately not chained into one unattended run, matching
+the leg-by-leg cadence every prior BW-001/BW-002 pilot leg in this
+project has used. The three non-Fable steps (`reset-day0`,
+`snapshot-day9`, and the restore-JSON round-trip `continuous`/`fresh`
+share) were run live against the real backend and verified correct; the
+two steps that would invoke `claude -p`/`claude -r` were not run, per
+"Only then run paired replicate #1."
