@@ -48,7 +48,16 @@ def get_world_state(session: Session = Depends(get_session)):
             }
             for f in world_state.get_silent_failures(session)
         ],
+        income_truth_document=_income_truth_document(session),
     )
+
+
+def _income_truth_document(session: Session) -> dict | None:
+    doc_id = "D-107" if world_state.is_event_applied(session, "EVT-employment-change") else "D-101"
+    doc = world_state.get_document(session, doc_id)
+    if doc is None:
+        return None
+    return {"document_id": doc.id, "filename": doc.filename, "visible_text": doc.visible_text}
 
 
 @router.get("/evaluate", response_model=EvaluateOut)

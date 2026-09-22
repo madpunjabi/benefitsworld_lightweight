@@ -20,6 +20,9 @@ FORBIDDEN_SUBSTRINGS = [
     "binary_success",
     "retry count",
     "retry_count",
+    "newest_document",
+    "stale",
+    "available_from_day",
 ]
 
 PUBLIC_ENDPOINTS = [
@@ -154,6 +157,32 @@ def test_silent_failure_sequence_leaks_nothing_to_public_endpoints(client, agent
             assert forbidden not in body_text, f"{path} leaked '{forbidden}' after the silent-failure sequence: {body_text}"
 
 
+def test_day18_sequence_leaks_nothing_to_public_endpoints(client, agent_headers, lab_headers):
+    """Advance to Day 18, inspect both D-101 and D-107, upload the wrong
+    one then the right one, and re-scan every public endpoint (plus
+    /files/D-101 and /files/D-107 specifically) for staleness/recency
+    hints, event internals, or evaluator/checkpoint fields."""
+    client.post("/lab/clock/advance", json={"to_day": 18}, headers=lab_headers)
+    client.get("/files/D-101", headers=agent_headers)
+    client.get("/files/D-107", headers=agent_headers)
+    client.post(
+        "/portal/uploads", json={"document_id": "D-101", "requirement": "updated_income_verification"}, headers=agent_headers
+    )
+    client.post(
+        "/portal/uploads", json={"document_id": "D-107", "requirement": "updated_income_verification"}, headers=agent_headers
+    )
+
+    for path in PUBLIC_ENDPOINTS + ["/files/D-101", "/files/D-107"]:
+        response = client.get(path, headers=agent_headers)
+        assert response.status_code == 200
+        body_text = json.dumps(response.json()).lower()
+        for forbidden in FORBIDDEN_SUBSTRINGS:
+            assert forbidden not in body_text, f"{path} leaked '{forbidden}' after the Day-18 sequence: {body_text}"
+
+    for doc in client.get("/files", headers=agent_headers).json():
+        assert set(doc.keys()) == {"id", "filename", "date", "type", "visible_text"}
+
+
 def test_public_router_has_no_lab_paths():
     from app.main import app
 
@@ -171,6 +200,7 @@ def test_public_router_has_no_lab_paths():
             "/inbox/messages",
             "/inbox/messages/{message_id}/read",
             "/files",
+            "/files/{document_id}",
             "/calendar/events",
             "/policy/search",
             "/policy/{policy_id}",

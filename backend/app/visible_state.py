@@ -56,20 +56,32 @@ def inbox_messages_view(session: Session) -> list[dict]:
     ]
 
 
+def _document_dict(doc) -> dict:
+    doc_type = doc.filename.rsplit(".", 1)[-1].upper() if "." in doc.filename else "FILE"
+    return {
+        "id": doc.id,
+        "filename": doc.filename,
+        "date": doc.doc_date,
+        "type": doc_type,
+        "visible_text": doc.visible_text,
+    }
+
+
 def files_view(session: Session) -> list[dict]:
-    docs = []
-    for doc in world_state.get_documents(session):
-        doc_type = doc.filename.rsplit(".", 1)[-1].upper() if "." in doc.filename else "FILE"
-        docs.append(
-            {
-                "id": doc.id,
-                "filename": doc.filename,
-                "date": doc.doc_date,
-                "type": doc_type,
-                "visible_text": doc.visible_text,
-            }
-        )
-    return docs
+    current_day = world_state.get_current_day(session)
+    return [
+        _document_dict(doc) for doc in world_state.get_documents(session) if doc.available_from_day <= current_day
+    ]
+
+
+def document_view(session: Session, document_id: str) -> dict | None:
+    """Single-document lookup, gated by the same day-based availability as
+    files_view — a not-yet-available document's id must 404 just like an
+    unknown one, so its existence can't be discovered early by guessing."""
+    doc = world_state.get_document(session, document_id)
+    if doc is None or doc.available_from_day > world_state.get_current_day(session):
+        return None
+    return _document_dict(doc)
 
 
 def calendar_events_view(session: Session) -> list[dict]:

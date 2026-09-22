@@ -513,3 +513,107 @@ Unrecovered silent failure (no retry):
 - No frontend-agent changes were needed or made — flagged explicitly
   rather than silently doing nothing, since "extend the golden path" could
   have been read as implying UI work.
+
+## Milestone 5 — LEAN Day-18 stale-state recovery (DONE, final BW-001 world-building milestone)
+
+**Day-18 event**: `EVT-employment-change` (`backend/app/event_engine.py`)
+fires purely on `current_sim_day >= 18` — no dependency on income/
+interview/housing being resolved first, matching the spec's "event occurs
+deterministically at Day 18" as a standalone, time-triggered fact. Effect:
+opens `updated_income_verification`, adds an inbox message ("Updated
+Income Verification Needed") and a portal notice, both in the same
+ordinary-correspondence tone established in Milestones 3-4.
+
+**New document, D-107** (not D-106 — see deviation below): a synthetic
+current paystub, employer "Golden State Logistics", $2,450/month, dated
+2026-09-19 (visibly after D-101's 2026-09-04). Its visibility is gated by
+the `documents.available_from_day` column — designed in Milestone 1
+("for docs introduced later (milestone 5)", per that milestone's own
+schema comment) but unused until now. `available_from_day` defaults to 0
+for every existing document; D-107 is seeded with `18`. `scenario_loader.py`
+now reads this per-document instead of hardcoding 0.
+`visible_state.files_view` and the new `visible_state.document_view`
+both filter on `available_from_day <= current_sim_day`, so D-107 is
+genuinely absent (`/files` omits it, `/files/D-107` 404s) before Day 18
+— not just hidden by the UI.
+
+**Inspection as structured evidence**: added `GET /files/{document_id}`
+(same availability gating as the list, so a not-yet-visible id 404s
+rather than leaking existence) which logs a `view_document` action —
+mirrors Milestone 4's `view_portal_case` pattern. `Files.tsx` now fetches
+the selected document via this endpoint (previously it just read from
+the already-fetched list client-side), so "D-107 was inspected" is a
+real, evidence-backed checkpoint rather than an inferred one.
+
+**Clearing the requirement**: `EVT-updated-income-verified` clears
+`updated_income_verification` only when D-107 (specifically) has
+persisted against it. D-101 persists normally if uploaded (it's a real
+document, not the Milestone-4 silent-failure mechanic) but never
+satisfies this requirement — the exact "was correct, now stale" test the
+milestone asked for.
+
+**Evaluator**: extended in place (still `evaluator_m4.py` — not renamed,
+per "keep the existing lightweight evaluator") with 5 checkpoints
+(`day18_employment_change_occurred`, `updated_income_requirement_visible`,
+`d107_inspected`, `d107_persisted_against_requirement`,
+`updated_income_requirement_cleared`). `binary_success` is still `all()`
+over every checkpoint, now 12 total — completing Milestones 2-4 alone no
+longer yields `binary_success=true`.
+
+**Lab Console**: one new read-only field, "Current employer/income
+truth" — D-107's content once `EVT-employment-change` has fired, D-101's
+before that. No new editor; the existing dynamic checkpoints table
+already renders the 5 new keys with no code change.
+
+### Tests — all passing
+
+Backend: **104/104** (91 prior unchanged + 13 new:
+`test_employment_change.py` covers timing (not-before-18, fires-at-18,
+fires-once-across-repeated-advances), D-101-vs-D-107, reset-to-Day-0, the
+new view_document logging, and content-based recency; `test_evaluator_m5.py`
+covers full end-to-end success, the inspected-vs-persisted independence
+case, and unresolved-Day-18-fails-success; `test_evaluator_m4.py`'s old
+exact-dict success assertion was updated — completing M2-M4 now correctly
+shows `binary_success=false` with the 5 new keys false, not a stale
+`true`). E2E: **13/13** (10 prior unchanged + the golden path extended
+through Day 18 + 1 new negative test), confirmed stable across 3
+consecutive full runs.
+
+### Deviations from the lean Milestone-5 specification
+
+- **D-106 was already taken.** Milestone 2's distractor document
+  (`vehicle_registration_renewal.pdf`) is `D-106`. The spec said "add one
+  new synthetic current paystub, D-106," but that id already names a
+  different, unrelated document from an earlier approved milestone —
+  renaming or reusing it would have been a real correctness bug, not a
+  cosmetic one. Used **D-107** for the new paystub instead and named it
+  consistently everywhere (event predicate, evaluator, seed data, UI
+  tests). Flagged here rather than silently picking an id.
+- `case.reported_employer` was **not** changed at Day 18 — it has shown
+  "Bayview Market" (the Day-0 stale value) since Milestone 2 and still
+  does. The spec didn't ask for this field to change, and the scenario
+  already established that "employer on file" is never authoritative —
+  truth always comes from documents, not that field. Changing it now
+  would have weakened the very lesson the field exists to teach. D-107's
+  own content (employer, income, date) is where the new facts live, per
+  "document them in the scenario data."
+- D-107's Files-list visibility is a natural consequence of
+  `available_from_day <= current_sim_day` evaluated at read time, not an
+  explicit "add a document" action inside the event's `apply()` — the
+  document is seeded once, like every other document, and simply becomes
+  visible when the day check passes. Simpler and more consistent with
+  the existing architecture than dynamic document insertion, and
+  produces identical observable behavior.
+- Extended `GET /portal/case`'s pattern to a new `GET /files/{id}`
+  endpoint for evidence-backed inspection tracking — not explicitly
+  requested, but necessary for `d107_inspected` to be real structured
+  evidence rather than an inferred one, consistent with Milestone 4's
+  established "never infer 'noticed' from prose" rule. Required a
+  Files.tsx change (fetch per-document instead of reading from the
+  already-fetched list) — the only frontend-agent change in this
+  milestone.
+- None of the "do not build" list was touched (no recertification,
+  missed-deadline logic, `RECERTIFICATION_OVERDUE`, context-reset
+  machinery, `case_state.json`/`task_queue.json`/`evidence_log.jsonl`,
+  full persistence harness, full failure taxonomy, additional scenarios,
+  arbitrary Lab editor, or model integration).

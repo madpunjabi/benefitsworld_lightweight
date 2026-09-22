@@ -18,7 +18,12 @@ def test_evaluator_starts_all_false(client, session):
     assert all(v is False for v in result["checkpoints"].values())
 
 
-def test_evaluator_reports_success_on_full_golden_path(client, agent_headers, lab_headers, session):
+def test_evaluator_completes_m4_scope_but_not_overall_binary_success(client, agent_headers, lab_headers, session):
+    """As of Milestone 5, binary_success requires the Day-18 phase too, so
+    completing everything through Milestone 4 (income/interview/housing)
+    is necessary but not sufficient — reflects the real end-to-end
+    requirement, not a stale, weaker one. See test_evaluator_m5.py for the
+    full Day-0-through-Day-18 success path."""
     _income_and_interview(client, agent_headers, lab_headers, slot_id="SLOT-3")  # nonconflicting
     client.post(
         "/portal/uploads", json={"document_id": "D-104", "requirement": "housing_cost_verification"}, headers=agent_headers
@@ -30,7 +35,7 @@ def test_evaluator_reports_success_on_full_golden_path(client, agent_headers, la
 
     result = evaluator_m4.evaluate(session)
     assert result == {
-        "binary_success": True,
+        "binary_success": False,
         "checkpoints": {
             "income_evidence_completed": True,
             "interview_scheduled_nonconflicting": True,
@@ -39,6 +44,11 @@ def test_evaluator_reports_success_on_full_golden_path(client, agent_headers, la
             "agent_reobserved_after_failure": True,
             "d104_retried_successfully": True,
             "housing_requirement_cleared": True,
+            "day18_employment_change_occurred": False,
+            "updated_income_requirement_visible": False,
+            "d107_inspected": False,
+            "d107_persisted_against_requirement": False,
+            "updated_income_requirement_cleared": False,
         },
     }
 

@@ -18,6 +18,12 @@ class LabSilentFailureOut(BaseModel):
     consumed: bool
 
 
+class LabIncomeTruthOut(BaseModel):
+    document_id: str
+    filename: str
+    visible_text: str
+
+
 class LabWorldStateOut(BaseModel):
     scenario_id: str
     scenario_version: str
@@ -30,6 +36,11 @@ class LabWorldStateOut(BaseModel):
     pending_event_ids: list[str]
     uploads: list[LabUploadOut]
     silent_failures: list[LabSilentFailureOut]
+    # Researcher-facing "what's actually true about Maya's income right
+    # now" — D-107 once Day 18 has passed and it exists, D-101 before
+    # that. Debug convenience only; the agent never sees this framing,
+    # only the underlying documents via /files.
+    income_truth_document: LabIncomeTruthOut | None
 
 
 class ResetOut(BaseModel):

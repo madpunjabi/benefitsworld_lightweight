@@ -1,6 +1,6 @@
 import json
 
-from app import world_state
+from app import visible_state, world_state
 
 
 def test_scenario_loader_populates_core_tables(client, session):
@@ -16,7 +16,12 @@ def test_scenario_loader_populates_core_tables(client, session):
     assert household.primary_applicant == "Maya Torres"
     assert case.status == "PENDING"
     assert "earned_income_verification" in json.loads(case.open_requirements_json)
-    assert len(docs) == 6
+    # 7 canonical documents exist (D-101..D-107), but D-107 (the Day-18
+    # paystub) is not yet available_from_day-visible at Day 0.
+    assert len(docs) == 7
+    assert {d["id"] for d in visible_state.files_view(session)} == {
+        "D-101", "D-102", "D-103", "D-104", "D-105", "D-106",
+    }
     assert len(events) == 1
     assert len(policy_items) == 5
     assert world_state.get_received_document_ids(session) == []

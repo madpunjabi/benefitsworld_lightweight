@@ -131,6 +131,44 @@ def _housing_verified_apply(session: Session) -> None:
     world_state.remove_open_requirement(session, "housing_cost_verification")
 
 
+DAY18_EMPLOYMENT_CHANGE_DAY = 18
+
+
+def _employment_change_predicate(session: Session) -> bool:
+    return world_state.get_current_day(session) >= DAY18_EMPLOYMENT_CHANGE_DAY
+
+
+def _employment_change_apply(session: Session) -> None:
+    day = world_state.get_current_day(session)
+    world_state.add_open_requirement(session, "updated_income_verification")
+    world_state.add_inbox_message(
+        session,
+        day,
+        sender="Alameda County Human Services Agency",
+        subject="Updated Income Verification Needed",
+        body=(
+            "Your CalFresh case requires updated proof of your current income. "
+            "Please provide a current pay statement. You can upload this "
+            "document through the Portal. If you have questions, contact "
+            "your caseworker."
+        ),
+    )
+    world_state.add_notice(
+        session, day, "Action required: Updated Income Verification. Please submit current proof of your income."
+    )
+
+
+def _updated_income_verified_predicate(session: Session) -> bool:
+    if "updated_income_verification" not in world_state.get_open_requirements(session):
+        return False
+    received = world_state.get_received_document_ids(session, requirement="updated_income_verification")
+    return "D-107" in received
+
+
+def _updated_income_verified_apply(session: Session) -> None:
+    world_state.remove_open_requirement(session, "updated_income_verification")
+
+
 def default_engine() -> EventEngine:
     return EventEngine(
         events=[
@@ -171,6 +209,28 @@ def default_engine() -> EventEngine:
                 description="Current lease (D-104) persisted against housing_cost_verification -> clear the requirement.",
                 predicate=_housing_verified_predicate,
                 apply=_housing_verified_apply,
+            ),
+            Event(
+                id="EVT-employment-change",
+                event_type="requirement_opened",
+                description=(
+                    "Simulated day reaches 18 -> Maya's income changes. A new current paystub "
+                    "(D-107) becomes visible in Files, and an updated_income_verification "
+                    "requirement opens with an inbox message and portal notice. Purely "
+                    "time-triggered; does not depend on earlier requirements being resolved."
+                ),
+                predicate=_employment_change_predicate,
+                apply=_employment_change_apply,
+            ),
+            Event(
+                id="EVT-updated-income-verified",
+                event_type="requirement_cleared",
+                description=(
+                    "New paystub (D-107) persisted against updated_income_verification -> clear "
+                    "the requirement. D-101, once valid, no longer satisfies it."
+                ),
+                predicate=_updated_income_verified_predicate,
+                apply=_updated_income_verified_apply,
             ),
         ]
     )

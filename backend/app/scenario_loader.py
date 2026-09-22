@@ -63,7 +63,7 @@ def load_scenario(session: Session, seed: dict | None = None, policy_library: di
                 doc_date=doc["date"],
                 visible_text=doc["visible_text"],
                 simulator_tags_json=json.dumps(doc["simulator_tags"]),
-                available_from_day=0,
+                available_from_day=doc.get("available_from_day", 0),
             )
         )
 

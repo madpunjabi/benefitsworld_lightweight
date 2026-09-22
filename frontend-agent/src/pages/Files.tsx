@@ -5,6 +5,7 @@ import type { DocumentOut } from "../api/types";
 export default function Files() {
   const [files, setFiles] = useState<DocumentOut[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedDoc, setSelectedDoc] = useState<DocumentOut | null>(null);
 
   useEffect(() => {
     getJSON<DocumentOut[]>("/files").then((docs) => {
@@ -13,7 +14,16 @@ export default function Files() {
     });
   }, []);
 
-  const selected = files.find((f) => f.id === selectedId) ?? null;
+  useEffect(() => {
+    if (!selectedId) {
+      setSelectedDoc(null);
+      return;
+    }
+    // A real, logged "open this document" request — not just a client-side
+    // switch over data already fetched with the list — so inspecting a
+    // specific file is a genuine, structurally-visible action.
+    getJSON<DocumentOut>(`/files/${selectedId}`).then(setSelectedDoc);
+  }, [selectedId]);
 
   return (
     <div data-testid="page-files">
@@ -35,13 +45,13 @@ export default function Files() {
           ))}
         </div>
         <div className="detail-pane" data-testid="file-preview">
-          {selected ? (
+          {selectedDoc ? (
             <>
-              <h3>{selected.filename}</h3>
+              <h3>{selectedDoc.filename}</h3>
               <p className="muted">
-                Type: {selected.type} · Date: {selected.date}
+                Type: {selectedDoc.type} · Date: {selectedDoc.date}
               </p>
-              <p data-testid="file-preview-text">{selected.visible_text}</p>
+              <p data-testid="file-preview-text">{selectedDoc.visible_text}</p>
             </>
           ) : (
             <p className="muted">Select a file to preview it.</p>

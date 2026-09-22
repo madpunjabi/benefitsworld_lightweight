@@ -112,12 +112,60 @@ test("human golden path: income -> interview -> housing, entirely through the vi
   await expect(page.getByTestId("requirement-housing_cost_verification")).toHaveCount(0);
   await page.screenshot({ path: path.join(SCREENSHOT_DIR, "m4-03-portal-resolved.png") });
 
-  // 12-13. Inspect the research-only Lab evaluator.
+  // 12-13. Inspect the research-only Lab evaluator — the M2-M4 phases are
+  // done, but overall binary_success now also requires the Day-18 phase.
   await page.goto(`${LAB_BASE}/`);
-  await expect(page.getByTestId("lab-binary-success")).toHaveText("true");
+  await expect(page.getByTestId("lab-binary-success")).toHaveText("false");
   await expect(page.getByTestId("lab-checkpoint-silent_failure_occurred")).toHaveText("true");
   await expect(page.getByTestId("lab-checkpoint-agent_reobserved_after_failure")).toHaveText("true");
   await expect(page.getByTestId("lab-checkpoint-d104_retried_successfully")).toHaveText("true");
   await expect(page.getByTestId("lab-checkpoint-housing_requirement_cleared")).toHaveText("true");
+  await expect(page.getByTestId("lab-checkpoint-day18_employment_change_occurred")).toHaveText("false");
   await page.screenshot({ path: path.join(SCREENSHOT_DIR, "m4-04-evaluator-success.png") });
+
+  // --- Milestone 5: Day-18 stale-state recovery -------------------------
+
+  // 2. Confirm the case currently has no open requirement.
+  await page.goto(`${AGENT_BASE}/portal`);
+  await expect(page.getByTestId("open-requirements")).toContainText("No open requirements");
+  await page.screenshot({ path: path.join(SCREENSHOT_DIR, "m5-01-no-open-requirements.png") });
+
+  // 3. Advance to Day 18 through the Lab/harness.
+  await advanceTime(request, 18);
+
+  // 4-5. Revisit the agent world and notice the updated income requirement.
+  await page.reload();
+  await expect(page.getByTestId("requirement-updated_income_verification")).toBeVisible();
+  await page.screenshot({ path: path.join(SCREENSHOT_DIR, "m5-02-updated-income-required.png") });
+
+  // 6. Inspect D-101 (once-current, now stale) and D-107 (the new paystub).
+  await page.goto(`${AGENT_BASE}/files`);
+  await page.getByTestId("file-item-D-101").click();
+  await expect(page.getByTestId("file-preview-text")).toContainText("Harbor Home Care");
+  await expect(page.getByTestId("file-preview-text")).toContainText("2026-09-04");
+  await page.getByTestId("file-item-D-107").click();
+  await expect(page.getByTestId("file-preview-text")).toContainText("Golden State Logistics");
+  await expect(page.getByTestId("file-preview-text")).toContainText("2026-09-19");
+  await page.screenshot({ path: path.join(SCREENSHOT_DIR, "m5-03-inspect-d101-d107.png") });
+
+  // 7. Upload D-107.
+  await page.goto(`${AGENT_BASE}/portal`);
+  await page.getByTestId("requirement-select-updated_income_verification").selectOption("D-107");
+  await page.getByTestId("requirement-upload-updated_income_verification").click();
+
+  // 8. Verify the requirement clears.
+  await page.reload();
+  await expect(page.getByTestId("received-doc-D-107")).toBeVisible();
+  await expect(page.getByTestId("requirement-updated_income_verification")).toHaveCount(0);
+  await expect(page.getByTestId("open-requirements")).toContainText("No open requirements");
+  await page.screenshot({ path: path.join(SCREENSHOT_DIR, "m5-04-updated-income-cleared.png") });
+
+  // Final evaluator check: now everything through Day 18 is done.
+  await page.goto(`${LAB_BASE}/`);
+  await expect(page.getByTestId("lab-binary-success")).toHaveText("true");
+  await expect(page.getByTestId("lab-checkpoint-day18_employment_change_occurred")).toHaveText("true");
+  await expect(page.getByTestId("lab-checkpoint-d107_inspected")).toHaveText("true");
+  await expect(page.getByTestId("lab-checkpoint-d107_persisted_against_requirement")).toHaveText("true");
+  await expect(page.getByTestId("lab-checkpoint-updated_income_requirement_cleared")).toHaveText("true");
+  await page.screenshot({ path: path.join(SCREENSHOT_DIR, "m5-05-evaluator-full-success.png") });
 });

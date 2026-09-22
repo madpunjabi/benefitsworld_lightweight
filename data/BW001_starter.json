@@ -81,7 +81,18 @@
       "visible_text": "California DMV. Vehicle registration renewal notice for Maya Torres. Vehicle: 2016 Honda Civic. Registration expires 2026-10-31. Renewal fee due: $71.",
       "simulator_tags": [
         "distractor"
-      ]
+      ],
+      "available_from_day": 0
+    },
+    {
+      "id": "D-107",
+      "filename": "paystub_sep19_current.pdf",
+      "date": "2026-09-19",
+      "visible_text": "Employee: Maya Torres. Employer: Golden State Logistics. Monthly-equivalent gross earnings: $2,450. Pay period ends 2026-09-19.",
+      "simulator_tags": [
+        "current_income_day18"
+      ],
+      "available_from_day": 18
     }
   ],
   "initial_case": {

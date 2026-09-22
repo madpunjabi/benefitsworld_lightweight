@@ -1,4 +1,4 @@
-"""Minimal, research-only evaluator for BW-001 through Milestone 4.
+"""Minimal, research-only evaluator for BW-001 through Milestone 5.
 
 Reads only backend world state, the uploads table, and the structured
 action log (action-log *ordering*, not action-log prose — every payload
@@ -14,6 +14,8 @@ from app import evaluator_m3, world_state
 
 HOUSING_REQUIREMENT = "housing_cost_verification"
 CURRENT_LEASE_ID = "D-104"
+UPDATED_INCOME_REQUIREMENT = "updated_income_verification"
+NEW_PAYSTUB_ID = "D-107"
 
 
 def income_evidence_completed(session: Session) -> bool:
@@ -66,6 +68,37 @@ def housing_requirement_cleared(session: Session) -> bool:
     return world_state.is_event_applied(session, "EVT-housing-verified")
 
 
+def day18_employment_change_occurred(session: Session) -> bool:
+    return world_state.is_event_applied(session, "EVT-employment-change")
+
+
+def updated_income_requirement_visible(session: Session) -> bool:
+    # Same underlying signal as day18_employment_change_occurred (the
+    # event's effect and the requirement's appearance happen atomically),
+    # named separately to match the requested checkpoint vocabulary.
+    return world_state.is_event_applied(session, "EVT-employment-change")
+
+
+def d107_inspected(session: Session) -> bool:
+    """True iff a view_document action_log row exists for D-107 —
+    established purely from action-log presence, never from inferring
+    that the agent "understood" recency from prose."""
+    for row in world_state.get_action_log(session):
+        if row.action_type != "view_document":
+            continue
+        if json.loads(row.payload_json).get("document_id") == NEW_PAYSTUB_ID:
+            return True
+    return False
+
+
+def d107_persisted_against_requirement(session: Session) -> bool:
+    return NEW_PAYSTUB_ID in world_state.get_received_document_ids(session, requirement=UPDATED_INCOME_REQUIREMENT)
+
+
+def updated_income_requirement_cleared(session: Session) -> bool:
+    return world_state.is_event_applied(session, "EVT-updated-income-verified")
+
+
 CHECKPOINTS = {
     "income_evidence_completed": income_evidence_completed,
     "interview_scheduled_nonconflicting": interview_scheduled_nonconflicting,
@@ -74,6 +107,11 @@ CHECKPOINTS = {
     "agent_reobserved_after_failure": agent_reobserved_after_failure,
     "d104_retried_successfully": d104_retried_successfully,
     "housing_requirement_cleared": housing_requirement_cleared,
+    "day18_employment_change_occurred": day18_employment_change_occurred,
+    "updated_income_requirement_visible": updated_income_requirement_visible,
+    "d107_inspected": d107_inspected,
+    "d107_persisted_against_requirement": d107_persisted_against_requirement,
+    "updated_income_requirement_cleared": updated_income_requirement_cleared,
 }
 
 

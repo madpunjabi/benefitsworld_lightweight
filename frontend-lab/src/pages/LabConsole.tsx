@@ -18,6 +18,12 @@ interface LabSilentFailure {
   consumed: boolean;
 }
 
+interface LabIncomeTruth {
+  document_id: string;
+  filename: string;
+  visible_text: string;
+}
+
 interface WorldState {
   scenario_id: string;
   scenario_version: string;
@@ -30,6 +36,7 @@ interface WorldState {
   pending_event_ids: string[];
   uploads: LabUpload[];
   silent_failures: LabSilentFailure[];
+  income_truth_document: LabIncomeTruth | null;
 }
 
 interface EvaluateResult {
@@ -94,6 +101,12 @@ export default function LabConsole() {
             </dd>
             <dt>Pending event IDs</dt>
             <dd data-testid="lab-pending-events">{state.pending_event_ids.join(", ")}</dd>
+            <dt>Current employer/income truth</dt>
+            <dd data-testid="lab-income-truth">
+              {state.income_truth_document
+                ? `${state.income_truth_document.document_id}: ${state.income_truth_document.visible_text}`
+                : "(unknown)"}
+            </dd>
           </dl>
 
           <h2>Scripted failures</h2>
