@@ -1,24 +1,70 @@
 import json
 
-from fastapi import APIRouter, Body, Depends
+from fastapi import APIRouter, Body, Depends, Response
 from sqlalchemy.orm import Session
 
-from app import clock, recertification, reset, scenario_registry, world_snapshot, world_state
+from app import clock, config, recertification, reset, scenario_registry, world_snapshot, world_state
 from app.db import get_session
 from app.schemas.lab import (
     AdvanceIn,
     AdvanceOut,
     EvaluateOut,
     LabWorldStateOut,
+    LoginIn,
+    LoginOut,
     ResetIn,
     ResetOut,
     RestoreIn,
     RestoreOut,
+    SessionOut,
     SnapshotOut,
 )
-from app.security import require_lab_token
+from app.security import (
+    SESSION_COOKIE_NAME,
+    SESSION_MAX_AGE_SECONDS,
+    create_session_token,
+    require_lab_token,
+)
 
 router = APIRouter(prefix="/lab", tags=["lab"], dependencies=[Depends(require_lab_token)])
+
+# Deliberately a SEPARATE router with no require_lab_token dependency:
+# /lab/login is how a browser session is authenticated in the first
+# place, so it cannot itself require the credential it's about to grant.
+# /lab/logout needs no prior auth either — clearing a cookie that may or
+# may not be there is always safe. Both still fall under the /lab path
+# prefix, so PathScopedCORSMiddleware still scopes them to LAB_ORIGIN
+# only, exactly like every other /lab route.
+auth_router = APIRouter(prefix="/lab", tags=["lab-auth"])
+
+
+@auth_router.post("/login", response_model=LoginOut)
+def login(body: LoginIn, response: Response):
+    if body.password != config.LAB_CONSOLE_PASSWORD:
+        return LoginOut(ok=False)
+    response.set_cookie(
+        key=SESSION_COOKIE_NAME,
+        value=create_session_token(),
+        max_age=SESSION_MAX_AGE_SECONDS,
+        httponly=True,
+        secure=config.IS_PRODUCTION,
+        samesite="none" if config.IS_PRODUCTION else "lax",
+    )
+    return LoginOut(ok=True)
+
+
+@auth_router.post("/logout", response_model=LoginOut)
+def logout(response: Response):
+    response.delete_cookie(SESSION_COOKIE_NAME)
+    return LoginOut(ok=True)
+
+
+@router.get("/session", response_model=SessionOut)
+def get_session_status():
+    """Auth-gated by design: reaching this at all (past require_lab_token)
+    is the only thing that matters. Used by the Lab Console's frontend to
+    probe "am I logged in" without any side effects."""
+    return SessionOut(authenticated=True)
 
 
 @router.get("/world_state", response_model=LabWorldStateOut)

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { labGet, labPost } from "../api/labClient";
+import { AGENT_URL, labGet, labPost } from "../api/labClient";
 
 interface LabUpload {
   id: number;
@@ -45,11 +45,12 @@ interface EvaluateResult {
   checkpoints: Record<string, boolean>;
 }
 
-export default function LabConsole() {
+export default function LabConsole({ onLogout }: { onLogout: () => void }) {
   const [state, setState] = useState<WorldState | null>(null);
   const [evaluation, setEvaluation] = useState<EvaluateResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [advanceTo, setAdvanceTo] = useState("18");
+  const [scenario, setScenario] = useState("BW-001");
 
   const refresh = useCallback(() => {
     Promise.all([labGet<WorldState>("/lab/world_state"), labGet<EvaluateResult>("/lab/evaluate")])
@@ -66,7 +67,7 @@ export default function LabConsole() {
   }, [refresh]);
 
   const onReset = async () => {
-    await labPost("/lab/reset");
+    await labPost("/lab/reset", { scenario_id: scenario });
     refresh();
   };
 
@@ -75,12 +76,84 @@ export default function LabConsole() {
     refresh();
   };
 
+  const onLogoutClick = async () => {
+    await labPost("/lab/logout");
+    onLogout();
+  };
+
   return (
     <div data-testid="page-lab-console">
-      <h1>BenefitsWorld Lab Console</h1>
+      <header>
+        <h1>BenefitsWorld</h1>
+        <h2>Lab Console</h2>
+        <p className="muted">
+          A benchmark environment for testing whether an AI agent can maintain responsibility for a
+          household's CalFresh case as facts, software state, requirements, and simulated time change.
+        </p>
+        <p data-testid="lab-ground-truth-badge">
+          <strong>Researcher view</strong> — shows ground truth hidden from the benchmark agent
+        </p>
+        <p>
+          <a href={AGENT_URL} target="_blank" rel="noreferrer" data-testid="lab-open-agent-view">
+            Open Agent View
+          </a>{" "}
+          <button data-testid="lab-logout-button" onClick={onLogoutClick}>
+            Log out
+          </button>
+        </p>
+      </header>
+
+      <section data-testid="lab-run1-result-card" className="card">
+        <h3>BW-001 — Pilot Run 1</h3>
+        <p className="muted">Recorded experiment result — not live state.</p>
+        <dl>
+          <dt>Model</dt>
+          <dd>Fable 5.1</dd>
+          <dt>Result</dt>
+          <dd>SUCCESS</dd>
+          <dt>Browser actions</dt>
+          <dd>196</dd>
+          <dt>Inference cost</dt>
+          <dd>~$16.78</dd>
+        </dl>
+      </section>
+
+      <section data-testid="lab-bw002-note" className="card">
+        <h3>BW-002</h3>
+        <p className="muted">Research iteration — evaluator ambiguity identified.</p>
+      </section>
+
       {error && <p style={{ color: "red" }}>{error}</p>}
       {state && (
         <>
+          <div>
+            <label>
+              Scenario{" "}
+              <select
+                data-testid="lab-scenario-select"
+                value={scenario}
+                onChange={(e) => setScenario(e.target.value)}
+              >
+                <option value="BW-001">BW-001</option>
+                <option value="BW-002">BW-002</option>
+              </select>
+            </label>{" "}
+            <button data-testid="lab-reset-button" onClick={onReset}>
+              Reset environment
+            </button>
+          </div>
+          <div>
+            <input
+              data-testid="lab-advance-input"
+              value={advanceTo}
+              onChange={(e) => setAdvanceTo(e.target.value)}
+            />
+            <button data-testid="lab-advance-button" onClick={onAdvance}>
+              Advance simulated time
+            </button>
+          </div>
+
+          <h2>World truth</h2>
           <dl>
             <dt>Scenario ID</dt>
             <dd data-testid="lab-scenario-id">{state.scenario_id}</dd>
@@ -187,21 +260,6 @@ export default function LabConsole() {
           )}
         </>
       )}
-      <div>
-        <button data-testid="lab-reset-button" onClick={onReset}>
-          Reset environment
-        </button>
-      </div>
-      <div>
-        <input
-          data-testid="lab-advance-input"
-          value={advanceTo}
-          onChange={(e) => setAdvanceTo(e.target.value)}
-        />
-        <button data-testid="lab-advance-button" onClick={onAdvance}>
-          Advance simulated time
-        </button>
-      </div>
     </div>
   );
 }

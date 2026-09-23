@@ -1,6 +1,6 @@
 import path from "node:path";
 import { expect, test } from "@playwright/test";
-import { AGENT_BASE, LAB_BASE, advanceTime, resetEnvironment } from "./helpers";
+import { AGENT_BASE, LAB_BASE, advanceTime, loginToLabConsole, resetEnvironment } from "./helpers";
 
 const SCREENSHOT_DIR = path.resolve(__dirname, "../screenshots");
 
@@ -35,6 +35,7 @@ test("negative: an unrecovered silent failure leaves housing unresolved and eval
   await page.screenshot({ path: path.join(SCREENSHOT_DIR, "m4-neg-01-unresolved-no-retry.png") });
 
   await page.goto(`${LAB_BASE}/`);
+  await loginToLabConsole(page);
   await expect(page.getByTestId("lab-binary-success")).toHaveText("false");
   await expect(page.getByTestId("lab-checkpoint-silent_failure_occurred")).toHaveText("true");
   await expect(page.getByTestId("lab-checkpoint-d104_retried_successfully")).toHaveText("false");

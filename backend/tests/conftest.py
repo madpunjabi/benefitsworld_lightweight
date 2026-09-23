@@ -2,7 +2,7 @@ import os
 import tempfile
 from pathlib import Path
 
-os.environ.setdefault("DB_PATH", str(Path(tempfile.gettempdir()) / "benefitsworld_test.db"))
+os.environ.setdefault("DATABASE_PATH", str(Path(tempfile.gettempdir()) / "benefitsworld_test.db"))
 
 import pytest
 from fastapi.testclient import TestClient

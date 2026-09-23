@@ -15,7 +15,7 @@ def _lab_get_paths() -> list[str]:
 def test_every_lab_route_is_enumerated_and_nonempty():
     # Guards against silently forgetting to add new lab routes to this
     # test as the lab router grows in later milestones.
-    assert set(_lab_get_paths()) == {"/lab/world_state", "/lab/evaluate", "/lab/snapshot"}
+    assert set(_lab_get_paths()) == {"/lab/world_state", "/lab/evaluate", "/lab/snapshot", "/lab/session"}
 
 
 def test_lab_route_rejects_missing_token(client):

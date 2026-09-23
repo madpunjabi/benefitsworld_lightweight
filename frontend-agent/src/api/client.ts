@@ -1,8 +1,10 @@
 // The ONLY backend this app ever talks to is the public router. There is
 // no lab origin, no lab token, and no /lab reference anywhere in this
 // package — that absence is what agent_frontend_isolation.spec.ts checks
-// for in the built production bundle.
-const API_BASE = "http://localhost:8000";
+// for in the built production bundle. VITE_API_BASE lets a deployment
+// point this at the hosted backend; local dev is unchanged (falls back
+// to localhost:8000, same as before).
+const API_BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:8000";
 
 export async function getJSON<T>(path: string): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`);

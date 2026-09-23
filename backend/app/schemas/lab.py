@@ -76,3 +76,15 @@ class RestoreIn(BaseModel):
 
 class RestoreOut(BaseModel):
     ok: bool
+
+
+class LoginIn(BaseModel):
+    password: str
+
+
+class LoginOut(BaseModel):
+    ok: bool
+
+
+class SessionOut(BaseModel):
+    authenticated: bool

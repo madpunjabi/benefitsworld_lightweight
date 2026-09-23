@@ -1,6 +1,6 @@
 import path from "node:path";
 import { expect, test } from "@playwright/test";
-import { resetEnvironment } from "./helpers";
+import { loginToLabConsole, resetEnvironment } from "./helpers";
 
 const SCREENSHOT_DIR = path.resolve(__dirname, "../screenshots");
 
@@ -34,7 +34,7 @@ test.describe("Milestone 1 shell smoke test", () => {
 
   test("Lab Console loads on :5174 and shows backend truth", async ({ page }) => {
     await page.goto("http://localhost:5174");
-    await expect(page.getByTestId("page-lab-console")).toBeVisible();
+    await loginToLabConsole(page);
     await expect(page.getByTestId("lab-scenario-id")).toHaveText("BW-001");
     await expect(page.getByTestId("lab-case-status")).toHaveText("PENDING");
     await page.screenshot({ path: path.join(SCREENSHOT_DIR, "lab-console-initial.png") });
@@ -42,6 +42,7 @@ test.describe("Milestone 1 shell smoke test", () => {
 
   test("Lab Console can advance simulated time and reset", async ({ page }) => {
     await page.goto("http://localhost:5174");
+    await loginToLabConsole(page);
     await expect(page.getByTestId("lab-sim-day")).toHaveText("0");
 
     await page.getByTestId("lab-advance-input").fill("18");

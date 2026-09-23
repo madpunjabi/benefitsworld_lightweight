@@ -1,6 +1,6 @@
 import path from "node:path";
 import { expect, test } from "@playwright/test";
-import { AGENT_BASE, LAB_BASE, advanceTime, resetEnvironment } from "./helpers";
+import { AGENT_BASE, LAB_BASE, advanceTime, loginToLabConsole, resetEnvironment } from "./helpers";
 
 const SCREENSHOT_DIR = path.resolve(__dirname, "../screenshots");
 
@@ -115,6 +115,7 @@ test("human golden path: income -> interview -> housing, entirely through the vi
   // 12-13. Inspect the research-only Lab evaluator — the M2-M4 phases are
   // done, but overall binary_success now also requires the Day-18 phase.
   await page.goto(`${LAB_BASE}/`);
+  await loginToLabConsole(page);
   await expect(page.getByTestId("lab-binary-success")).toHaveText("false");
   await expect(page.getByTestId("lab-checkpoint-silent_failure_occurred")).toHaveText("true");
   await expect(page.getByTestId("lab-checkpoint-agent_reobserved_after_failure")).toHaveText("true");
@@ -162,6 +163,7 @@ test("human golden path: income -> interview -> housing, entirely through the vi
 
   // Final evaluator check: now everything through Day 18 is done.
   await page.goto(`${LAB_BASE}/`);
+  await loginToLabConsole(page);
   await expect(page.getByTestId("lab-binary-success")).toHaveText("true");
   await expect(page.getByTestId("lab-checkpoint-day18_employment_change_occurred")).toHaveText("true");
   await expect(page.getByTestId("lab-checkpoint-d107_inspected")).toHaveText("true");

@@ -34,6 +34,14 @@ class PathScopedCORSMiddleware(BaseHTTPMiddleware):
                         "Access-Control-Allow-Origin": allowed_origin,
                         "Access-Control-Allow-Methods": ALLOWED_METHODS,
                         "Access-Control-Allow-Headers": ALLOWED_HEADERS,
+                        # Required for the Lab Console's session cookie
+                        # (see security.py) to be sent/received across the
+                        # Vercel<->Railway origin boundary. Harmless for
+                        # agent-frontend requests, which never send
+                        # credentials. Only ever paired with a specific
+                        # echoed origin above, never "*" — required by the
+                        # CORS spec whenever this header is "true".
+                        "Access-Control-Allow-Credentials": "true",
                     },
                 )
             # Wrong/missing origin for this path: no CORS headers, so the
@@ -44,4 +52,5 @@ class PathScopedCORSMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         if origin_ok:
             response.headers["Access-Control-Allow-Origin"] = allowed_origin
+            response.headers["Access-Control-Allow-Credentials"] = "true"
         return response
