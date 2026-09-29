@@ -1,44 +1,44 @@
 # BenefitsWorld
 
-A lightweight benchmark environment for testing whether an AI agent can hold
-**longitudinal responsibility** for a household's CalFresh (food assistance) case
-— navigating a realistic multi-page county portal, reading notices, submitting the
-right documents, and keeping the case in good standing as facts, requirements, and
-simulated time change.
+A benchmark that tests whether an AI agent can hold **durable responsibility** for a
+household's CalFresh (food assistance) case — operating a realistic multi-page county
+portal, reading notices, submitting the right documents, catching silent failures, and
+keeping the case in good standing as facts, requirements, and simulated time change.
 
-It has two surfaces:
+## ⚡ Try it in 60 seconds — no install, nothing to set up
 
-- **Agent view** — the county Case Portal an agent (or a person) interacts with.
-- **Lab Console** — a researcher view showing the hidden ground truth, plus controls
-  to reset the world, switch scenarios, and advance simulated time.
+Open these two links in your browser:
 
----
+1. **Lab Console (researcher view)** → **https://benefitsworld-lab.vercel.app**
+   - Password: **`benefitsforall`**
+   - Make sure the scenario says **BW-001**, then click **Reset environment**.
+2. **Agent view (what the AI operates)** → **https://benefitsworld-agent.vercel.app**
+   - This is the county Case Portal, with none of the hidden answers.
 
-## 1. Try it now — hosted, no install
+**Then try the task yourself (you play the agent):**
+1. In the Agent view, open **My Files** to see the household's documents.
+2. On the **Case Portal**, under *Earned Income Verification*, pick the current paystub
+   and click **Upload**.
+3. Back in the **Lab Console**, watch the **World truth** panel — the requirement clears.
+4. In the Lab Console, set **Advance simulated time** to `3`, then `18`, and watch new
+   requirements, an interview, a silent upload failure, and a mid-case employment change
+   appear over time. That longitudinal pressure is the whole point.
 
-| Surface | URL |
-| --- | --- |
-| **Agent view** (drive the case) | https://benefitsworld-agent.vercel.app |
-| **Lab Console** (researcher controls) | https://benefitsworld-lab.vercel.app |
+> The hosted backend is one shared demo world. If it looks mid-progress, just click
+> **Reset environment** in the Lab Console to start clean.
 
-Lab Console password: **`benefitsforall`**
-
-**A 2-minute walkthrough:**
-1. Open the **Lab Console**, log in, make sure the scenario is **BW-001**, and click
-   **Reset environment**. The **World truth** panel now shows a clean Day-0 case
-   (status `PENDING`, one open requirement: `earned_income_verification`).
-2. Click **Open Agent View** (or open the agent URL). You are now looking at what the
-   agent sees — with none of the ground truth.
-3. Resolve the case by hand: check **My Files**, then on the Case Portal pick the
-   correct document for **Earned Income Verification** and upload it. Watch the
-   **World truth** panel in the Lab Console update as state changes.
-
-> The hosted backend is a **single shared world** (one database). If several people
-> use it at once they will affect each other's state — just hit **Reset** to start clean.
+That's everything a reviewer needs. The sections below are for running it yourself or
+reading the code.
 
 ---
 
-## 2. Run it locally
+## What the two surfaces are
+
+- **Agent view** — the county Case Portal an AI agent (or a person) operates.
+- **Lab Console** — the researcher view: the ground truth hidden from the agent, plus
+  controls to reset the world, switch scenarios, and advance simulated time.
+
+## Run it locally
 
 **Prerequisites:** Python **3.11 or 3.12**, Node **18+**, and `git`.
 
@@ -48,8 +48,8 @@ cd benefitsworld_lightweight
 ./init.sh
 ```
 
-`init.sh` creates the Python virtualenv, installs backend + both frontend
-dependencies on first run, and starts all three services. Then open:
+`init.sh` creates the Python virtualenv, installs backend + both frontend dependencies
+on first run, and starts all three services. Then open:
 
 | Surface | URL |
 | --- | --- |
@@ -59,32 +59,24 @@ dependencies on first run, and starts all three services. Then open:
 
 Local Lab Console password: **`dev-lab-password-benefitsworld-local-only`**
 
-No environment variables are required for local use — the frontends default to the
-local backend. Press **Ctrl-C** to stop everything.
+No environment variables are needed — the frontends default to the local backend. Press
+**Ctrl-C** to stop everything.
 
 > If dependency install fails while building `pydantic-core`, you are on Python 3.14+;
 > use Python 3.11 or 3.12 instead.
 
----
+## The AI agent (the capability being demonstrated)
 
-## 3. The AI agent (the capability being demonstrated)
+The environment is built to be driven by an **AI agent** under realistic constraints:
+browser-only access, no visibility into ground truth, and the need to verify its own
+actions and recover from failures over simulated days.
 
-The point of the environment is to be driven by an **AI agent** operating under
-realistic constraints: browser-only access, no visibility into ground truth, and the
-requirement to verify its own actions and ask the household when a fact is genuinely
-missing.
-
-**To see a run without any setup:** the Lab Console shows a **"BW-001 — Pilot Run 1"**
-card (a recorded result: model, success/failure, browser-action count, and cost), and
-the `runs/` directory holds saved run artifacts. This is the recommended way for a
-reviewer to see the agent's behavior.
-
-**Running a live agent yourself is optional and heavier** — it requires an agent
-runner (a separate Claude process driving a browser via automation) and your own
-Anthropic API key, and each full run costs real inference budget. It is not needed to
-evaluate or interact with the prototype.
-
----
+- **See a run with zero setup:** the Lab Console shows a recorded pilot-run result
+  (model, success/failure, action count, cost), and the `runs/` directory holds saved
+  run artifacts.
+- **Run a live agent yourself (optional, heavier):** requires a separate agent runner
+  driving a browser via automation and your own Anthropic API key. Not needed to
+  evaluate or interact with the prototype.
 
 ## Repo layout
 
